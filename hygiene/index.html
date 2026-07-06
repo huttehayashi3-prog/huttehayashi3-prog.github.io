@@ -544,13 +544,13 @@ async function loadRecord(d){
     if(data.checks?.length>0){
       checks=checks.map(c=>{
         const sv=data.checks.find(s=>s.rule_id===c.rule_id)
-        return sv?{...c,checked:sv.checked}:c
+        return sv?{...c,result:sv.result||sv.checked?'good':'',note:sv.note||''}:c
       })
     }
   }else{
     document.getElementById('dailyNote').value=''
     temps=temps.map(t=>({...t,morning:'',evening:''}))
-    checks=checks.map(c=>({...c,checked:false}))
+    checks=checks.map(c=>({...c,result:'',note:''}))
   }
   renderChecks()
   renderTemps()
@@ -572,21 +572,28 @@ async function loadRecentRecords(){
 }
 
 function renderChecks(){
-  const done=checks.filter(c=>c.checked).length
+  const done=checks.filter(c=>c.result==='good').length
   const pct=checks.length>0?Math.round(done/checks.length*100):0
   const badge=document.getElementById('checkBadge')
   badge.textContent=pct+'%'
   badge.className='badge '+(pct>=80?'badge-ok':'badge-ng')
   document.getElementById('checkList').innerHTML=checks.map((c,i)=>`
-    <div class="check-row" onclick="toggleCheck(${i})">
-      <div class="checkbox${c.checked?' checked':''}">${c.checked?'✓':''}</div>
-      <span class="check-label${c.checked?' done':''}">${c.item}</span>
+    <div style="padding:12px 0;border-bottom:0.5px solid #f0f0f0">
+      <div style="font-size:15px;margin-bottom:8px;font-weight:500">${c.item}</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="setResult(${i},'good')" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid ${c.result==='good'?'#1D9E75':'#ddd'};background:${c.result==='good'?'#E1F5EE':'#fff'};color:${c.result==='good'?'#085041':'#666'};font-size:16px;font-weight:600;cursor:pointer">良</button>
+        <button onclick="setResult(${i},'bad')" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid ${c.result==='bad'?'#E24B4A':'#ddd'};background:${c.result==='bad'?'#FCEBEB':'#fff'};color:${c.result==='bad'?'#791F1F':'#666'};font-size:16px;font-weight:600;cursor:pointer">否</button>
+      </div>
+      ${c.result==='bad'?`<input type="text" value="${c.note||''}" onchange="setNote(${i},this.value)" placeholder="否の場合、内容を記入" style="width:100%;margin-top:8px;border:0.5px solid #ddd;border-radius:8px;padding:8px;font-size:14px">`:``}
     </div>`).join('')
 }
 
-function toggleCheck(i){
-  checks[i].checked=!checks[i].checked
+function setResult(i,result){
+  checks[i].result=result
   renderChecks()
+}
+function setNote(i,val){
+  checks[i].note=val
 }
 
 function renderTemps(){
@@ -898,7 +905,7 @@ async function loadRulesForDaily(){
   const {data:{user}}=await sb.auth.getUser()
   const {data}=await sb.from('rules').select('*').eq('user_id',user.id).or(`store_id.is.null,store_id.eq.${currentStore.id}`).order('sort_order')
   const r=data||[]
-  checks=r.map(rule=>({rule_id:rule.id,item:rule.name,checked:false}))
+  checks=r.map(rule=>({rule_id:rule.id,item:rule.name,result:'',note:''}))
   renderChecks()
   await loadRecord(selectedDate)
 }
