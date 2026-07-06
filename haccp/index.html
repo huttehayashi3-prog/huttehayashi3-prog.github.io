@@ -875,15 +875,52 @@ function submitNG(){
 async function loadFromCloud(){
   setSyncStatus('syncing');
   try{
-    const r=await fetch(`${SUPABASE_URL}/rest/v1/haccp_lots?factory=eq.${FACTORY}&order=date.desc`,{headers:{...HEADERS,'Prefer':''}});
-    if(r.ok){
-      const rows=await r.json();
+    // ── haccp_records（温度・工程・衛生）を取得 ──
+    const r0=await fetch(`${SUPABASE_URL}/rest/v1/haccp_records?factory=eq.${FACTORY}&order=updated_at.desc`,{headers:{...HEADERS,'Prefer':''}});
+    if(r0.ok){
+      const rows=await r0.json();
+      const db=getDB();
+      rows.forEach(rec=>{
+        if(!rec.date)return;
+        db[rec.date]=db[rec.date]||{};
+        if(rec.temps)      db[rec.date].temps=rec.temps;
+        if(rec.process)    db[rec.date].process=rec.process;
+        if(rec.hygiene)    db[rec.date].hygiene=rec.hygiene;
+        if(rec.temp_note)  db[rec.date].tempNote=rec.temp_note;
+        if(rec.saved_temp) db[rec.date].savedTemp=rec.saved_temp;
+        if(rec.saved_proc) db[rec.date].savedProc=rec.saved_proc;
+        if(rec.saved_hyg)  db[rec.date].savedHyg=rec.saved_hyg;
+        if(rec.ng_count)   db[rec.date].ngCount=rec.ng_count;
+      });
+      saveDB(db);
+      loadDateData(activeDate);
+      renderCal();
+    }
+    // ── haccp_lots（ロット一覧）を取得 ──
+    const r1=await fetch(`${SUPABASE_URL}/rest/v1/haccp_lots?factory=eq.${FACTORY}&order=date.desc`,{headers:{...HEADERS,'Prefer':''}});
+    if(r1.ok){
+      const rows=await r1.json();
       lots.length=0;rows.forEach(l=>lots.push(l));
       renderLots();updateCtLotSel();updateShipLotSel();
     }
+    // ── haccp_center_temps（中心温度）を取得 ──
     const r2=await fetch(`${SUPABASE_URL}/rest/v1/haccp_center_temps?factory=eq.${FACTORY}&date=eq.${activeDate}&order=recorded_at.desc`,{headers:{...HEADERS,'Prefer':''}});
-    if(r2.ok){const rows=await r2.json();ctRecords.length=0;rows.forEach(r=>ctRecords.push({lot_id:r.lot_id,date:r.date,start_time:r.start_time,end_time:r.end_time,center_temp:r.center_temp,measure_point:r.measure_point,staff:r.staff,note:r.note,ok:r.is_ok}));renderCTList();}
+    if(r2.ok){
+      const rows=await r2.json();
+      ctRecords.length=0;
+      rows.forEach(r=>ctRecords.push({lot_id:r.lot_id,date:r.date,start_time:r.start_time,end_time:r.end_time,center_temp:r.center_temp,measure_point:r.measure_point,staff:r.staff,note:r.note,ok:r.is_ok}));
+      renderCTList();
+    }
+    // ── haccp_shipments（出荷記録）を取得 ──
+    const r3=await fetch(`${SUPABASE_URL}/rest/v1/haccp_shipments?factory=eq.${FACTORY}&order=recorded_at.desc`,{headers:{...HEADERS,'Prefer':''}});
+    if(r3.ok){
+      const rows=await r3.json();
+      shipments.length=0;
+      rows.forEach(r=>shipments.push({dest:r.dest,lot_id:r.lot_id,qty:r.qty,date:r.date,note:r.note||'',recorded_at:r.recorded_at}));
+      renderShipList();
+    }
     setSyncStatus('ok');
+    addLog('ok','クラウドからデータを取得しました');
   }catch(e){setSyncStatus('err');}
 }
 
