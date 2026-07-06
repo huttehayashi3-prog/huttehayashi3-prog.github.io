@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="HH HACCP">
+<meta name="theme-color" content="#ffffff">
+<title>HutteHayashi HACCP</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+:root{
+  --bg:#ffffff;--bg2:#f5f5f5;--bg3:#ebebeb;
+  --text:#1a1a1a;--text2:#666;--text3:#999;
+  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.2);
+  --blue:#185FA5;--blue-bg:#E6F1FB;--blue-text:#0C447C;
+  --green:#1D9E75;--green-bg:#EAF3DE;--green-text:#3B6D11;
+  --red:#E24B4A;--red-bg:#FCEBEB;--red-text:#A32D2D;
+  --amber-bg:#FAEEDA;--amber-text:#633806;
+  --radius:8px;--radius-lg:12px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;
+    --text:#f2f2f7;--text2:#aeaeb2;--text3:#636366;
+    --border:rgba(255,255,255,0.12);--border2:rgba(255,255,255,0.2);
+    --blue-bg:#0c2a4a;--blue-text:#85B7EB;
+    --green-bg:#0a2a1a;--green-text:#5DCAA5;
+    --red-bg:#2a0a0a;--red-text:#F09595;
+    --amber-bg:#2a1a00;--amber-text:#EF9F27;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:var(--bg2);color:var(--text);min-height:100vh}
+.app{max-width:480px;margin:0 auto;padding-bottom:90px}
+.hdr{background:var(--bg);border-bottom:0.5px solid var(--border);padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
+.hdr-title{font-size:15px;font-weight:600;color:var(--text)}
+.hdr-date-row{display:flex;align-items:center;gap:6px;margin-top:2px}
+.date-sel{font-size:12px;border:0.5px solid var(--border2);border-radius:var(--radius);padding:3px 8px;background:var(--bg);color:var(--text)}
+.past-pill{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--amber-bg);color:var(--amber-text);font-weight:500}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:4px}
+.sync-dot.off{background:var(--text3)}
+.sync-dot.syncing{background:#EF9F27;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.past-banner{background:var(--amber-bg);border-bottom:0.5px solid rgba(186,117,23,0.3);padding:9px 16px;display:none;align-items:center;gap:8px}
+.past-banner.show{display:flex}
+.past-banner-text{font-size:12px;color:var(--amber-text);flex:1}
+.past-banner-btn{font-size:12px;color:var(--amber-text);background:none;border:none;cursor:pointer;font-weight:500;padding:0}
+.nav{display:flex;background:var(--bg);border-bottom:0.5px solid var(--border)}
+.nb{flex:1;padding:10px 4px;font-size:11px;color:var(--text2);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;text-align:center;white-space:nowrap;line-height:1.4}
+.nb.on{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+.sec{padding:10px}
+.card{background:var(--bg);border-radius:var(--radius-lg);border:0.5px solid var(--border);margin-bottom:10px;overflow:hidden}
+.ch{padding:12px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px}
+.cht{font-size:13px;font-weight:600;color:var(--text);flex:1}
+.chs{font-size:11px;color:var(--text2)}
+.row{display:flex;align-items:center;padding:12px 14px;border-bottom:0.5px solid var(--border);gap:8px;min-height:48px}
+.row:last-child{border-bottom:none}
+.rl{flex:1;font-size:14px;color:var(--text)}
+.rs{font-size:11px;color:var(--text2);margin-top:1px}
+.ti-inp{width:72px;padding:7px 8px;font-size:14px;border:0.5px solid var(--border2);border-radius:var(--radius);text-align:center;background:var(--bg);color:var(--text)}
+.tu{font-size:12px;color:var(--text2)}
+.tgl{position:relative;width:44px;height:26px;flex-shrink:0}
+.tgl input{opacity:0;width:0;height:0}
+.tsl{position:absolute;inset:0;background:var(--border2);border-radius:13px;cursor:pointer;transition:background .2s}
+.tsl:before{content:'';position:absolute;width:20px;height:20px;left:3px;bottom:3px;background:white;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,0.2)}
+.tgl input:checked+.tsl{background:var(--green)}
+.tgl input:checked+.tsl:before{transform:translateX(18px)}
+.badge{font-size:11px;padding:3px 9px;border-radius:99px;font-weight:600;flex-shrink:0}
+.ok{background:var(--green-bg);color:var(--green-text)}
+.ng{background:var(--red-bg);color:var(--red-text)}
+.warn{background:var(--amber-bg);color:var(--amber-text)}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:10px}
+.stat{background:var(--bg2);border-radius:var(--radius);padding:12px;text-align:center}
+.sn{font-size:22px;font-weight:600;color:var(--text)}
+.sl{font-size:11px;color:var(--text2);margin-top:2px}
+.btn{width:100%;padding:14px;background:var(--blue);color:white;border:none;border-radius:var(--radius-lg);font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
+.btn:active{opacity:.82;transform:scale(0.98)}
+.btn-r{background:var(--red)}
+.btn-g{background:var(--green)}
+.btn-o{background:transparent;color:var(--blue);border:0.5px solid var(--blue);margin-top:8px}
+.ta{width:100%;padding:10px;font-size:14px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);resize:vertical;min-height:64px}
+.sel-f{width:100%;padding:10px;font-size:14px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text)}
+.inp{width:100%;padding:10px;font-size:14px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text)}
+.pbar{height:4px;background:var(--border);border-radius:2px;margin:0 14px 10px}
+.pfill{height:4px;background:var(--green);border-radius:2px;transition:width .3s}
+.tab{display:none}.tab.on{display:block}
+.ptag{font-size:11px;padding:2px 7px;background:var(--blue-bg);color:var(--blue-text);border-radius:99px;margin-right:3px}
+.step-box{margin:10px;padding:13px;background:var(--bg2);border-left:3px solid var(--red)}
+.step-box.done{border-left-color:var(--green)}
+.step-num{font-size:11px;color:var(--red-text);font-weight:600;margin-bottom:3px}
+.step-num.done{color:var(--green-text)}
+.step-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.step-desc{font-size:12px;color:var(--text2);line-height:1.5}
+.lot-row{display:flex;align-items:center;padding:10px 14px;border-bottom:0.5px solid var(--border);gap:8px;min-height:56px}
+.lot-row:last-child{border-bottom:none}
+.lot-id{font-size:12px;font-weight:600;color:var(--blue);min-width:110px}
+.rec-row{padding:9px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:flex-start;gap:9px}
+.rec-row:last-child{border-bottom:none}
+.rec-icon{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px}
+.ri-ok{background:var(--green-bg);color:var(--green-text)}
+.ri-ng{background:var(--red-bg);color:var(--red-text)}
+.ri-w{background:var(--amber-bg);color:var(--amber-text)}
+.rec-text{font-size:13px;color:var(--text);flex:1}
+.rec-time{font-size:11px;color:var(--text2);margin-top:1px}
+.lbl{font-size:12px;color:var(--text2);margin-bottom:4px;margin-top:10px}
+.lbl:first-child{margin-top:0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;padding:8px 12px}
+.cal-day{text-align:center;font-size:11px;color:var(--text2);padding:4px 0;font-weight:600}
+.cal-cell{text-align:center;font-size:13px;padding:7px 2px;border-radius:var(--radius);cursor:pointer;color:var(--text);position:relative}
+.cal-cell:active{background:var(--bg3)}
+.cal-cell.today{background:var(--blue-bg);color:var(--blue-text);font-weight:600}
+.cal-cell.selected{background:var(--blue);color:white;font-weight:600}
+.cal-cell.has-rec::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--green)}
+.cal-cell.has-ng::after{background:var(--red)}
+.cal-cell.empty{cursor:default}
+.cal-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 4px}
+.cal-month{font-size:14px;font-weight:600;color:var(--text)}
+.cal-nav{background:none;border:none;cursor:pointer;color:var(--text2);font-size:18px;padding:6px 10px}
+.modal-bg{background:rgba(0,0,0,0.5);padding:16px;display:none;align-items:flex-start;justify-content:center;min-height:320px;padding-top:20px}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg);border-radius:var(--radius-lg);border:0.5px solid var(--border);padding:16px;width:100%}
+.modal-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.empty-msg{font-size:13px;color:var(--text2);text-align:center;padding:18px 0}
+.toast{position:fixed;bottom:calc(90px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#1a1a1a;color:white;font-size:13px;padding:10px 20px;border-radius:99px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="hdr">
+  <div>
+    <div class="hdr-title"><i class="ti ti-building-factory2"></i> HutteHayashi HACCP</div>
+    <div class="hdr-date-row">
+      <input type="date" class="date-sel" id="active-date" onchange="onDateChange()">
+      <span class="past-pill" id="past-label" style="display:none"><i class="ti ti-history"></i> 過去記録</span>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+    <span class="badge ok" id="hdr-status"><i class="ti ti-check"></i> 記録中</span>
+    <span style="font-size:11px;color:var(--text2)"><span class="sync-dot off" id="sync-dot"></span><span id="sync-label">未接続</span></span>
+  </div>
+</div>
+
+<div class="past-banner" id="past-banner">
+  <i class="ti ti-calendar-event" style="color:var(--amber-text);font-size:15px"></i>
+  <span class="past-banner-text" id="past-banner-text"></span>
+  <button class="past-banner-btn" onclick="goToday()">今日に戻る</button>
+</div>
+
+<nav class="nav">
+  <button class="nb on" onclick="showTab('temp',this)"><i class="ti ti-thermometer"></i><br>温度</button>
+  <button class="nb" onclick="showTab('process',this)"><i class="ti ti-list-check"></i><br>工程</button>
+  <button class="nb" onclick="showTab('hygiene',this)"><i class="ti ti-droplet"></i><br>衛生</button>
+  <button class="nb" onclick="showTab('trace',this)"><i class="ti ti-git-branch"></i><br>追跡</button>
+  <button class="nb" onclick="showTab('records',this)"><i class="ti ti-archive"></i><br>記録</button>
+</nav>
+
+<!-- 温度タブ -->
+<div id="tab-temp" class="tab on">
+  <div class="sec">
+    <div class="card">
+      <div class="ch"><i class="ti ti-snowflake" style="color:var(--blue);font-size:18px"></i><span class="cht">冷蔵・冷凍庫温度</span><span class="chs">冷蔵&lt;5℃ / 冷凍&lt;-15℃</span></div>
+      <div class="pbar"><div class="pfill" id="tp" style="width:0%"></div></div>
+      <div class="row"><div class="rl">原料冷蔵庫<div class="rs">豚肉原料保管</div></div><input type="number" class="ti-inp" id="t1" placeholder="0.0" inputmode="decimal" oninput="chkTemp('t1','s1',5,'lt')"><span class="tu">℃</span><span class="badge" id="s1">—</span></div>
+      <div class="row"><div class="rl">製品冷蔵庫<div class="rs">ハム・生ハム・精肉</div></div><input type="number" class="ti-inp" id="t2" placeholder="0.0" inputmode="decimal" oninput="chkTemp('t2','s2',5,'lt')"><span class="tu">℃</span><span class="badge" id="s2">—</span></div>
+      <div class="row"><div class="rl">冷凍庫<div class="rs">メンチカツ・冷凍品</div></div><input type="number" class="ti-inp" id="t3" placeholder="0.0" inputmode="decimal" oninput="chkTemp('t3','s3',-15,'lt')"><span class="tu">℃</span><span class="badge" id="s3">—</span></div>
+      <div class="row"><div class="rl">製造室室温</div><input type="number" class="ti-inp" id="t4" placeholder="0.0" inputmode="decimal" oninput="chkTemp('t4','s4',15,'lt')"><span class="tu">℃</span><span class="badge" id="s4">—</span></div>
+    </div>
+    <div class="card">
+      <div class="ch"><i class="ti ti-flame" style="color:var(--red);font-size:18px"></i><span class="cht">加熱工程温度（CCP）</span><span class="chs">中心温度≥75℃</span></div>
+      <div class="row"><div class="rl">ハム・ソーセージ加熱<div class="rs"><span class="ptag">ハム</span><span class="ptag">ソーセージ</span></div></div><input type="number" class="ti-inp" id="t5" placeholder="0.0" inputmode="decimal" oninput="chkCCP('t5','s5')"><span class="tu">℃</span><span class="badge" id="s5">—</span></div>
+    </div>
+    <div id="ccp-flow" style="display:none">
+      <div class="card">
+        <div class="ch"><i class="ti ti-alert-triangle" style="color:var(--red);font-size:18px"></i><span class="cht" style="color:var(--red-text)">CCP逸脱 — 是正処置フロー</span></div>
+        <div class="step-box" id="step1"><div class="step-num">ステップ 1</div><div class="step-title">加熱を継続・再加熱</div><div class="step-desc">ロット全体を追加加熱し、中心温度75℃以上を再確認してください。</div><button class="btn" style="margin-top:10px;background:#854F0B;font-size:13px;padding:10px" onclick="doneStep(1)"><i class="ti ti-check"></i> 完了</button></div>
+        <div class="step-box" id="step2" style="opacity:.4"><div class="step-num">ステップ 2</div><div class="step-title">該当ロットを隔離・識別</div><div class="step-desc">「要確認品」ラベルを貼り、通常製品と区別して保管してください。</div><button class="btn" style="margin-top:10px;background:#854F0B;font-size:13px;padding:10px;display:none" id="s2btn" onclick="doneStep(2)"><i class="ti ti-check"></i> 完了</button></div>
+        <div class="step-box" id="step3" style="opacity:.4"><div class="step-num">ステップ 3</div><div class="step-title">原因調査・記録</div><div class="step-desc">加熱機器の温度計・タイマーを確認し、原因を記録してください。</div><button class="btn" style="margin-top:10px;background:#854F0B;font-size:13px;padding:10px;display:none" id="s3btn" onclick="doneStep(3)"><i class="ti ti-check"></i> 完了</button></div>
+        <div class="step-box" id="step4" style="opacity:.4"><div class="step-num">ステップ 4</div><div class="step-title">責任者へ報告・出荷判断</div><div class="step-desc">製造責任者に報告し、出荷可否を判断します。</div><button class="btn btn-r" style="margin-top:10px;font-size:13px;padding:10px;display:none" id="s4btn" onclick="completeCCP()"><i class="ti ti-file-check"></i> 是正処置完了・記録保存</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><i class="ti ti-pencil" style="font-size:18px;color:var(--text2)"></i><span class="cht">特記事項</span></div>
+      <div style="padding:10px 14px"><textarea class="ta" id="temp-note" placeholder="異常・対応処置など"></textarea></div>
+    </div>
+    <button class="btn" onclick="saveTemp()"><i class="ti ti-device-floppy"></i> 温度記録を保存</button>
+  </div>
+</div>
+
+<!-- 工程タブ -->
+<div id="tab-process" class="tab">
+  <div class="sec">
+    <div class="card">
+      <div class="ch"><i class="ti ti-meat" style="font-size:18px;color:var(--blue)"></i><span class="cht">原料受入</span></div>
+      <div class="row"><div class="rl">福豚受入温度確認<div class="rs">林牧場からの原料</div></div><label class="tgl"><input type="checkbox" id="p1" onchange="calcP()"><span class="tsl"></span></label></div>
+      <div class="row"><div class="rl">外観・臭気確認</div><label class="tgl"><input type="checkbox" id="p2" onchange="calcP()"><span class="tsl"></span></label></div>
+      <div class="row"><div class="rl">納品書・ロット番号記録</div><label class="tgl"><input type="checkbox" id="p3" onchange="calcP()"><span class="tsl"></span></label></div>
+    </div>
+    <div class="card">
+      <div class="ch"><i class="ti ti-tools-kitchen-2" style="font-size:18px;color:var(--blue)"></i><span class="cht">製造前確認</span></div>
+      <div class="row"><div class="rl">機器・器具の洗浄・消毒</div><label class="tgl"><input type="checkbox" id="p4" onchange="calcP()"><span class="tsl"></span></label></div>
+      <div class="row"><div class="rl">添加物の計量確認<div class="rs">亜硝酸塩・食塩等</div></div><label class="tgl"><input type="checkbox" id="p5" onchange="calcP()"><span class="tsl"></span></label></div>
+      <div class="row"><div class="rl">製造ロット番号の付与</div><label class="tgl"><input type="checkbox" id="p6" onchange="calcP()"><span class="tsl"></span></label></div>
+    </div>
+    <div class="card">
+      <div class="ch"><i class="ti ti-package" style="font-size:18px;color:var(--blue)"></i><span class="cht">包装・出荷前確認</span></div>
+      <div class="row"><div class="rl">シール・気密確認</div><label class="tgl"><input type="checkbox" id="p7" onchange="calcP()"><span class="tsl"></span></label></div>
+      <div class="row"><div class="rl">賞味期限・ロット表示</div><label class="tgl"><input type="checkbox" id="p8" onchange="calcP()"><span class="tsl"></span></label></div>
+      <div class="row"><div class="rl">金属探知機通過確認</div><label class="tgl"><input type="checkbox" id="p9" onchange="calcP()"><span class="tsl"></span></label></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="sn" id="pd">0</div><div class="sl">完了項目</div></div>
+      <div class="stat"><div class="sn" id="pr" style="color:var(--red)">9</div><div class="sl">未完了</div></div>
+    </div>
+    <button class="btn" onclick="saveProc()"><i class="ti ti-device-floppy"></i> 工程点検を保存</button>
+  </div>
+</div>
+
+<!-- 衛生タブ -->
+<div id="tab-hygiene" class="tab">
+  <div class="sec">
+    <div class="card">
+      <div class="ch"><i class="ti ti-user-check" style="font-size:18px;color:var(--blue)"></i><span class="cht">従業員健康チェック</span></div>
+      <div class="row"><div class="rl">体調不良者なし（発熱・下痢等）</div><label class="tgl"><input type="checkbox" id="h1"><span class="tsl"></span></label></div>
+      <div class="row"><div class="rl">手指の傷・炎症なし</div><label class="tgl"><input type="checkbox" id="h2"><span class="tsl"></span></label></div>
+      <div class="row"><div class="rl">作業服・帽子・手袋着用</div><label class="tgl"><input type="checkbox" id="h3"><span class="tsl"></span></label></div>
+    </div>
+    <div class="card">
+      <div class="ch"><i class="ti ti-droplet" style="font-size:18px;color:var(--blue)"></i><span class="cht">施設・設備衛生</span></div>
+      <div class="row"><div class="rl">製造室床・壁の清潔確認</div><label class="tgl"><input type="checkbox" id="h4"><span class="tsl"></span></label></div>
+      <div class="row"><div class="rl">排水溝の清掃・点検</div><label class="tgl"><input type="checkbox" id="h5"><span class="tsl"></span></label></div>
+      <div class="row"><div class="rl">手洗い設備の補充確認</div><label class="tgl"><input type="checkbox" id="h6"><span class="tsl"></span></label></div>
+      <div class="row"><div class="rl">害虫侵入防止設備の確認</div><label class="tgl"><input type="checkbox" id="h7"><span class="tsl"></span></label></div>
+    </div>
+    <button class="btn" onclick="saveHyg()"><i class="ti ti-device-floppy"></i> 衛生記録を保存</button>
+    <button class="btn btn-r" style="margin-top:8px" onclick="openNG()"><i class="ti ti-alert-triangle"></i> 不適合・改善報告</button>
+  </div>
+</div>
+
+<!-- 追跡タブ -->
+<div id="tab-trace" class="tab">
+  <div class="sec">
+    <div class="card">
+      <div class="ch"><i class="ti ti-plus" style="font-size:18px;color:var(--blue)"></i><span class="cht">新規ロット登録</span></div>
+      <div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px">
+        <div><div class="lbl">製品種別</div><select class="sel-f" id="lot-prod"><option>ハム</option><option>ソーセージ</option><option>生ハム</option><option>サラミ</option><option>メンチカツ</option><option>精肉</option></select></div>
+        <div><div class="lbl">原料受入日</div><input type="date" class="inp" id="lot-indate"></div>
+        <div><div class="lbl">原料ロット番号（林牧場）</div><input type="text" class="inp" id="lot-rawid" placeholder="例）HB-20260624-01"></div>
+        <div><div class="lbl">製造ロット番号</div><input type="text" class="inp" id="lot-mfgid" placeholder="例）HH-20260624-001"></div>
+        <div><div class="lbl">製造数量</div><input type="number" class="inp" id="lot-qty" placeholder="例）50" inputmode="numeric"></div>
+        <div><div class="lbl">賞味期限</div><input type="date" class="inp" id="lot-exp"></div>
+        <div><div class="lbl">出荷先（任意）</div><input type="text" class="inp" id="lot-dest" placeholder="例）直売所・〇〇店"></div>
+        <button class="btn btn-g" onclick="regLot()"><i class="ti ti-plus"></i> ロットを登録</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><i class="ti ti-list" style="font-size:18px;color:var(--blue)"></i><span class="cht">登録済みロット</span><span class="chs" id="lot-count">0件</span></div>
+      <div id="lot-list"><div style="padding:16px;text-align:center"><span class="empty-msg">まだロットが登録されていません</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 記録タブ -->
+<div id="tab-records" class="tab">
+  <div class="sec">
+    <div class="card">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="calPrev()"><i class="ti ti-chevron-left"></i></button>
+        <span class="cal-month" id="cal-month-label"></span>
+        <button class="cal-nav" onclick="calNext()"><i class="ti ti-chevron-right"></i></button>
+      </div>
+      <div class="cal-grid">
+        <div class="cal-day">日</div><div class="cal-day">月</div><div class="cal-day">火</div>
+        <div class="cal-day">水</div><div class="cal-day">木</div><div class="cal-day">金</div><div class="cal-day">土</div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+    <div class="card">
+      <div class="ch"><i class="ti ti-calendar-event" style="font-size:18px;color:var(--text2)"></i><span class="cht" id="day-detail-title">記録の詳細</span></div>
+      <div id="day-detail-body"><div class="empty-msg">日付を選択して記録を確認</div></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="sn" id="r-temp" style="color:var(--text2)">—</div><div class="sl">温度記録</div></div>
+      <div class="stat"><div class="sn" id="r-proc" style="color:var(--text2)">—</div><div class="sl">工程点検</div></div>
+      <div class="stat"><div class="sn" id="r-hyg" style="color:var(--text2)">—</div><div class="sl">衛生管理</div></div>
+      <div class="stat"><div class="sn" id="r-ng" style="color:var(--red)">0</div><div class="sl">不適合件数</div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><i class="ti ti-history" style="font-size:18px;color:var(--text2)"></i><span class="cht">イベントログ</span></div>
+      <div id="event-log">
+        <div class="rec-row"><div class="rec-icon ri-ok"><i class="ti ti-info-circle"></i></div><div><div class="rec-text">アプリを起動しました</div><div class="rec-time" id="start-time"></div></div></div>
+      </div>
+    </div>
+    <button class="btn" onclick="saveAll()"><i class="ti ti-device-floppy"></i> <span id="save-btn-label">本日の全記録を保存</span></button>
+    <button class="btn btn-o" style="margin-top:8px" onclick="loadFromCloud()"><i class="ti ti-cloud-download"></i> クラウドから最新を取得</button>
+  </div>
+</div>
+
+<!-- 不適合モーダル -->
+<div id="ng-modal-wrap" class="modal-bg">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-alert-triangle" style="color:var(--red)"></i> 不適合・改善報告</div>
+    <div class="lbl">発生箇所</div><select class="sel-f" id="ng-loc"><option>原料受入</option><option>製造工程</option><option>加熱工程（CCP）</option><option>包装・出荷</option><option>保管・冷蔵</option><option>衛生管理</option></select>
+    <div class="lbl">不適合内容</div><textarea class="ta" id="ng-desc" placeholder="具体的な内容を記入してください"></textarea>
+    <div class="lbl">是正処置</div><textarea class="ta" id="ng-action" placeholder="実施した対応処置"></textarea>
+    <div class="lbl">担当者名</div><input type="text" class="inp" id="ng-staff" placeholder="氏名">
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-r" style="flex:1;padding:12px;margin-top:0" onclick="submitNG()"><i class="ti ti-check"></i> 保存</button>
+      <button class="btn btn-o" style="flex:1;padding:12px;margin-top:0" onclick="closeNG()"><i class="ti ti-x"></i> キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+</div>
+
+<script>
+const SUPABASE_URL='https://jqexliindtoiwwjpkroz.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZXhsaWluZHRvaXd3anBrcm96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNDM0MjgsImV4cCI6MjA5NzgxOTQyOH0.8Croo0REQWfu0yYVsecd1ctKUs-8UrQCRPSOgYa_1c8';
+const FACTORY='HutteHayashi';
+const HEADERS={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'resolution=merge-duplicates'};
+
+const today=new Date();
+const todayStr=fmt(today);
+let activeDate=todayStr;
+let calYear=today.getFullYear();
+let calMonth=today.getMonth();
+let localDB={};
+let cloudCalCache={};
+
+function fmt(d){return`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`}
+function fmtDisp(s){return`${s.slice(0,4)}年${s.slice(4,6)}月${s.slice(6,8)}日`}
+function fmtTime(d){return`${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`}
+function now(){return fmtTime(new Date())}
+
+document.getElementById('active-date').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+document.getElementById('start-time').textContent=fmtTime(today);
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+function setSyncStatus(state){
+  const dot=document.getElementById('sync-dot');
+  const lbl=document.getElementById('sync-label');
+  dot.className='sync-dot';
+  if(state==='ok'){dot.classList.add('');lbl.textContent='同期済';dot.style.background='var(--green)';}
+  else if(state==='syncing'){dot.classList.add('syncing');lbl.textContent='同期中...';dot.style.background='#EF9F27';}
+  else if(state==='err'){lbl.textContent='オフライン';dot.style.background='var(--red)';}
+  else{lbl.textContent='未接続';dot.style.background='var(--text3)';}
+}
+
+async function apiGet(table,params=''){
+  try{
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`,{headers:{...HEADERS,'Prefer':''}});
+    if(!r.ok)throw new Error();
+    return await r.json();
+  }catch(e){return null;}
+}
+async function apiUpsert(table,body){
+  try{
+    setSyncStatus('syncing');
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}`,{method:'POST',headers:HEADERS,body:JSON.stringify(body)});
+    if(!r.ok)throw new Error();
+    setSyncStatus('ok');return true;
+  }catch(e){setSyncStatus('err');return false;}
+}
+
+function getLocal(){try{return JSON.parse(localStorage.getItem('hh-haccp-v3')||'{}')}catch(e){return{}}}
+function setLocal(db){try{localStorage.setItem('hh-haccp-v3',JSON.stringify(db))}catch(e){}}
+
+function mergeRec(local,cloud){
+  return{
+    temps:cloud.temps||local.temps||{},
+    process:cloud.process||local.process||{},
+    hygiene:cloud.hygiene||local.hygiene||{},
+    tempNote:cloud.temp_note||local.tempNote||'',
+    savedTemp:cloud.saved_temp||local.savedTemp||false,
+    savedProc:cloud.saved_proc||local.savedProc||false,
+    savedHyg:cloud.saved_hyg||local.savedHyg||false,
+    ngCount:Math.max(cloud.ng_count||0,local.ngCount||0),
+  };
+}
+
+async function loadFromCloud(){
+  toast('クラウドから取得中...');
+  setSyncStatus('syncing');
+  const rows=await apiGet('haccp_records',`factory=eq.${FACTORY}&order=date.desc&limit=90`);
+  if(!rows){setSyncStatus('err');toast('オフラインです。ローカルデータを表示します');return;}
+  const db=getLocal();
+  rows.forEach(row=>{
+    const ds=row.date;
+    const local=db[ds]||{};
+    db[ds]=mergeRec(local,row);
+  });
+  setLocal(db);
+  const lotRows=await apiGet('haccp_lots',`factory=eq.${FACTORY}&order=created_at.desc&limit=200`);
+  if(lotRows){
+    const existing=lots.map(l=>l.mfgid);
+    lotRows.forEach(r=>{
+      if(!existing.includes(r.mfgid)){
+        lots.push({prod:r.prod,indate:r.indate,rawid:r.rawid,mfgid:r.mfgid,qty:r.qty,exp:r.exp,dest:r.dest,date:r.date});
+      }
+    });
+    renderLots();
+  }
+  cloudCalCache={};
+  rows.forEach(r=>{cloudCalCache[r.date]={savedTemp:r.saved_temp,savedProc:r.saved_proc,savedHyg:r.saved_hyg,ngCount:r.ng_count};});
+  setSyncStatus('ok');
+  loadDateData(activeDate);
+  renderCal();
+  toast('クラウドから取得しました');
+}
+
+async function pushToCloud(ds){
+  const db=getLocal();const rec=db[ds]||{};
+  const body={
+    date:ds,factory:FACTORY,
+    temps:rec.temps||{},process:rec.process||{},hygiene:rec.hygiene||{},
+    temp_note:rec.tempNote||'',
+    saved_temp:rec.savedTemp||false,saved_proc:rec.savedProc||false,saved_hyg:rec.savedHyg||false,
+    ng_count:rec.ngCount||0,
+    updated_at:new Date().toISOString()
+  };
+  const ok=await apiUpsert('haccp_records',body);
+  if(ok){cloudCalCache[ds]={savedTemp:rec.savedTemp,savedProc:rec.savedProc,savedHyg:rec.savedHyg,ngCount:rec.ngCount||0};renderCal();}
+  return ok;
+}
+
+function onDateChange(){
+  const v=document.getElementById('active-date').value;
+  if(!v)return;
+  const p=v.split('-');activeDate=p[0]+p[1]+p[2];
+  const isPast=activeDate!==todayStr;
+  document.getElementById('past-label').style.display=isPast?'':'none';
+  document.getElementById('past-banner').classList.toggle('show',isPast);
+  document.getElementById('past-banner-text').textContent=isPast?`${fmtDisp(activeDate)}の記録を編集中`:'';
+  document.getElementById('save-btn-label').textContent=isPast?`${fmtDisp(activeDate)}の記録を保存`:'本日の全記録を保存';
+  document.getElementById('hdr-status').className='badge '+(isPast?'warn':'ok');
+  document.getElementById('hdr-status').innerHTML=isPast?'<i class="ti ti-history"></i> 過去記録':'<i class="ti ti-check"></i> 記録中';
+  loadDateData(activeDate);renderCal();
+}
+function goToday(){
+  document.getElementById('active-date').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  onDateChange();
+}
+
+function loadDateData(ds){
+  const db=getLocal();const rec=db[ds]||{};
+  const thrs=[5,5,-15,15,75];const dirs=['lt','lt','lt','lt','gte'];
+  ['t1','t2','t3','t4','t5'].forEach((id,i)=>{
+    document.getElementById(id).value=rec.temps?rec.temps[id]||'':'';
+    const s=document.getElementById('s'+(i+1));
+    if(rec.temps&&rec.temps[id]!==undefined&&rec.temps[id]!==''){
+      const v=parseFloat(rec.temps[id]);const ok=dirs[i]==='lt'?v<thrs[i]:v>=thrs[i];
+      s.className='badge '+(ok?'ok':'ng');s.textContent=ok?'OK':'NG';
+    }else{s.className='badge';s.textContent='—';}
+  });
+  updateTP();
+  ['p1','p2','p3','p4','p5','p6','p7','p8','p9'].forEach(id=>{document.getElementById(id).checked=rec.process?rec.process[id]||false:false;});
+  calcP();
+  ['h1','h2','h3','h4','h5','h6','h7'].forEach(id=>{document.getElementById(id).checked=rec.hygiene?rec.hygiene[id]||false:false;});
+  document.getElementById('temp-note').value=rec.tempNote||'';
+  document.getElementById('r-temp').textContent=rec.savedTemp?'済':'—';document.getElementById('r-temp').style.color=rec.savedTemp?'var(--green)':'var(--text2)';
+  document.getElementById('r-proc').textContent=rec.savedProc?'済':'—';document.getElementById('r-proc').style.color=rec.savedProc?'var(--green)':'var(--text2)';
+  document.getElementById('r-hyg').textContent=rec.savedHyg?'済':'—';document.getElementById('r-hyg').style.color=rec.savedHyg?'var(--green)':'var(--text2)';
+  document.getElementById('r-ng').textContent=rec.ngCount||0;
+}
+
+function saveCurrentInputs(){
+  const db=getLocal();if(!db[activeDate])db[activeDate]={};const r=db[activeDate];
+  r.temps={};['t1','t2','t3','t4','t5'].forEach(id=>{r.temps[id]=document.getElementById(id).value;});
+  r.tempNote=document.getElementById('temp-note').value;
+  r.process={};['p1','p2','p3','p4','p5','p6','p7','p8','p9'].forEach(id=>{r.process[id]=document.getElementById(id).checked;});
+  r.hygiene={};['h1','h2','h3','h4','h5','h6','h7'].forEach(id=>{r.hygiene[id]=document.getElementById(id).checked;});
+  setLocal(db);
+}
+
+function showTab(name,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('tab-'+name).classList.add('on');btn.classList.add('on');
+  if(name==='records')renderCal();
+}
+
+function chkTemp(id,sid,thr,dir){
+  const v=parseFloat(document.getElementById(id).value);const el=document.getElementById(sid);
+  if(isNaN(v)){el.className='badge';el.textContent='—';updateTP();return;}
+  const ok=dir==='lt'?v<thr:v>=thr;
+  el.className='badge '+(ok?'ok':'ng');el.textContent=ok?'OK':'NG';
+  updateTP();
+  if(!ok)addLog('ng',`温度異常: ${document.getElementById(id).closest('.row').querySelector('.rl').childNodes[0].textContent.trim()} (${v}℃)`);
+}
+function chkCCP(id,sid){
+  const v=parseFloat(document.getElementById(id).value);const el=document.getElementById(sid);
+  const flow=document.getElementById('ccp-flow');
+  if(isNaN(v)){el.className='badge';el.textContent='—';flow.style.display='none';updateTP();return;}
+  const ok=v>=75;el.className='badge '+(ok?'ok':'ng');el.textContent=ok?'OK':'NG';
+  flow.style.display=ok?'none':'block';updateTP();
+  if(!ok){addLog('ng',`CCP逸脱: 中心温度 ${v}℃（基準75℃以上）`);bumpNG();}
+}
+function updateTP(){
+  const f=['t1','t2','t3','t4','t5'].filter(id=>document.getElementById(id).value!=='').length;
+  document.getElementById('tp').style.width=Math.round(f/5*100)+'%';
+}
+function doneStep(n){
+  const box=document.getElementById('step'+n);box.classList.add('done');
+  box.querySelector('.step-num').classList.add('done');box.querySelector('.step-num').textContent='ステップ '+n+' — 完了';
+  box.querySelector('button').style.display='none';addLog('warn','是正ステップ'+n+'完了');
+  if(n<4){document.getElementById('step'+(n+1)).style.opacity='1';document.getElementById('s'+(n+1)+'btn').style.display='block';}
+}
+function completeCCP(){doneStep(4);document.getElementById('ccp-flow').style.display='none';addLog('ok','CCP是正処置完了');document.getElementById('s5').className='badge warn';document.getElementById('s5').textContent='是正済';}
+function calcP(){
+  const ids=['p1','p2','p3','p4','p5','p6','p7','p8','p9'];
+  const done=ids.filter(id=>document.getElementById(id).checked).length;
+  document.getElementById('pd').textContent=done;document.getElementById('pr').textContent=ids.length-done;
+}
+function addLog(type,msg){
+  const log=document.getElementById('event-log');const row=document.createElement('div');row.className='rec-row';
+  const cls=type==='ok'?'ri-ok':type==='ng'?'ri-ng':'ri-w';const icon=type==='ok'?'ti-check':type==='ng'?'ti-alert-triangle':'ti-info-circle';
+  row.innerHTML=`<div class="rec-icon ${cls}"><i class="ti ${icon}"></i></div><div><div class="rec-text">${msg}</div><div class="rec-time">${fmtDisp(activeDate)} ${now()}</div></div>`;
+  log.appendChild(row);
+}
+function bumpNG(){
+  const db=getLocal();if(!db[activeDate])db[activeDate]={};
+  db[activeDate].ngCount=(db[activeDate].ngCount||0)+1;setLocal(db);
+  document.getElementById('r-ng').textContent=db[activeDate].ngCount;
+}
+
+const lots=[];
+function regLot(){
+  const rawid=document.getElementById('lot-rawid').value;const mfgid=document.getElementById('lot-mfgid').value;
+  if(!mfgid||!rawid){alert('ロット番号を入力してください');return;}
+  const prod=document.getElementById('lot-prod').value;
+  const lot={prod,indate:document.getElementById('lot-indate').value,rawid,mfgid,qty:document.getElementById('lot-qty').value,exp:document.getElementById('lot-exp').value,dest:document.getElementById('lot-dest').value,date:activeDate};
+  lots.push(lot);renderLots();addLog('ok',`ロット登録: ${mfgid} (${prod})`);
+  apiUpsert('haccp_lots',{...lot,factory:FACTORY});
+  document.getElementById('lot-mfgid').value='';document.getElementById('lot-rawid').value='';document.getElementById('lot-qty').value='';
+  toast('ロットを登録・同期しました');
+}
+function renderLots(){
+  const list=document.getElementById('lot-list');
+  document.getElementById('lot-count').textContent=lots.length+'件';
+  if(!lots.length){list.innerHTML='<div style="padding:16px;text-align:center"><span class="empty-msg">まだロットが登録されていません</span></div>';return;}
+  list.innerHTML=lots.slice().reverse().map(l=>`<div class="lot-row"><div><div class="lot-id">${l.mfgid}</div><div style="font-size:11px;color:var(--text2)">${fmtDisp(l.date)} | 原料: ${l.rawid}</div></div><div style="flex:1;padding-left:6px"><span class="ptag">${l.prod}</span>${l.qty?l.qty+'個':''}</div><div style="font-size:11px;color:var(--text2)">${l.exp||''}</div></div>`).join('');
+}
+
+function openNG(){document.getElementById('ng-modal-wrap').classList.add('open')}
+function closeNG(){document.getElementById('ng-modal-wrap').classList.remove('open')}
+async function submitNG(){
+  const desc=document.getElementById('ng-desc').value;if(!desc){alert('不適合内容を入力してください');return;}
+  const loc=document.getElementById('ng-loc').value;
+  addLog('ng',`不適合: [${loc}] ${desc.slice(0,20)}${desc.length>20?'…':''}`);
+  bumpNG();
+  await apiUpsert('haccp_ng_reports',{factory:FACTORY,date:activeDate,location:loc,description:desc,action:document.getElementById('ng-action').value,staff:document.getElementById('ng-staff').value});
+  await pushToCloud(activeDate);
+  closeNG();document.getElementById('ng-desc').value='';document.getElementById('ng-action').value='';document.getElementById('ng-staff').value='';
+  toast('不適合報告をクラウドに保存しました');
+}
+
+async function saveTemp(){
+  saveCurrentInputs();
+  const db=getLocal();if(!db[activeDate])db[activeDate]={};db[activeDate].savedTemp=true;setLocal(db);
+  document.getElementById('r-temp').textContent='済';document.getElementById('r-temp').style.color='var(--green)';
+  addLog('ok',`温度記録を保存 (${fmtDisp(activeDate)})`);
+  const ok=await pushToCloud(activeDate);
+  toast(ok?'温度記録をクラウドに保存しました':'ローカルに保存しました（オフライン）');
+}
+async function saveProc(){
+  saveCurrentInputs();
+  const db=getLocal();if(!db[activeDate])db[activeDate]={};db[activeDate].savedProc=true;setLocal(db);
+  document.getElementById('r-proc').textContent='済';document.getElementById('r-proc').style.color='var(--green)';
+  addLog('ok',`工程点検を保存 (${fmtDisp(activeDate)})`);
+  const ok=await pushToCloud(activeDate);
+  toast(ok?'工程点検をクラウドに保存しました':'ローカルに保存しました（オフライン）');
+}
+async function saveHyg(){
+  saveCurrentInputs();
+  const db=getLocal();if(!db[activeDate])db[activeDate]={};db[activeDate].savedHyg=true;setLocal(db);
+  document.getElementById('r-hyg').textContent='済';document.getElementById('r-hyg').style.color='var(--green)';
+  addLog('ok',`衛生管理を保存 (${fmtDisp(activeDate)})`);
+  const ok=await pushToCloud(activeDate);
+  toast(ok?'衛生管理をクラウドに保存しました':'ローカルに保存しました（オフライン）');
+}
+async function saveAll(){
+  saveCurrentInputs();
+  const db=getLocal();if(!db[activeDate])db[activeDate]={};
+  db[activeDate].savedTemp=true;db[activeDate].savedProc=true;db[activeDate].savedHyg=true;setLocal(db);
+  document.getElementById('r-temp').textContent='済';document.getElementById('r-temp').style.color='var(--green)';
+  document.getElementById('r-proc').textContent='済';document.getElementById('r-proc').style.color='var(--green)';
+  document.getElementById('r-hyg').textContent='済';document.getElementById('r-hyg').style.color='var(--green)';
+  addLog('ok',`全記録を保存 (${fmtDisp(activeDate)})`);
+  const ok=await pushToCloud(activeDate);
+  toast(ok?'全記録をクラウドに保存しました':'ローカルに保存しました（オフライン）');
+}
+
+function renderCal(){
+  const db=getLocal();
+  document.getElementById('cal-month-label').textContent=`${calYear}年${calMonth+1}月`;
+  const grid=document.getElementById('cal-grid');
+  const first=new Date(calYear,calMonth,1).getDay();
+  const last=new Date(calYear,calMonth+1,0).getDate();
+  let html='';
+  for(let i=0;i<first;i++)html+=`<div class="cal-cell empty"></div>`;
+  for(let d=1;d<=last;d++){
+    const ds=`${calYear}${String(calMonth+1).padStart(2,'0')}${String(d).padStart(2,'0')}`;
+    const local=db[ds]||{};const cloud=cloudCalCache[ds]||{};
+    const savedTemp=local.savedTemp||cloud.savedTemp;const savedProc=local.savedProc||cloud.savedProc;const savedHyg=local.savedHyg||cloud.savedHyg;
+    const hasRec=savedTemp||savedProc||savedHyg;
+    const hasNG=(local.ngCount||0)>0||(cloud.ngCount||0)>0;
+    let cls='cal-cell';
+    if(ds===activeDate)cls+=' selected';else if(ds===todayStr)cls+=' today';
+    if(hasNG)cls+=' has-ng';else if(hasRec)cls+=' has-rec';
+    html+=`<div class="${cls}" onclick="selectCalDay('${ds}')">${d}</div>`;
+  }
+  grid.innerHTML=html;
+}
+function selectCalDay(ds){
+  activeDate=ds;const y=ds.slice(0,4),m=ds.slice(4,6),d2=ds.slice(6,8);
+  document.getElementById('active-date').value=`${y}-${m}-${d2}`;
+  onDateChange();showDayDetail(ds);
+}
+function showDayDetail(ds){
+  const db=getLocal();const rec=db[ds]||{};
+  document.getElementById('day-detail-title').textContent=fmtDisp(ds)+'の記録';
+  const rows=[];
+  rows.push({cls:rec.savedTemp?'ri-ok':'ri-ng',icon:rec.savedTemp?'ti-check':'ti-x',text:'温度記録: '+(rec.savedTemp?'保存済':'未保存')});
+  rows.push({cls:rec.savedProc?'ri-ok':'ri-ng',icon:rec.savedProc?'ti-check':'ti-x',text:'工程点検: '+(rec.savedProc?'保存済':'未保存')});
+  rows.push({cls:rec.savedHyg?'ri-ok':'ri-ng',icon:rec.savedHyg?'ti-check':'ti-x',text:'衛生管理: '+(rec.savedHyg?'保存済':'未保存')});
+  if(rec.ngCount)rows.push({cls:'ri-ng',icon:'ti-alert-triangle',text:`不適合: ${rec.ngCount}件`});
+  if(rec.tempNote)rows.push({cls:'ri-w',icon:'ti-pencil',text:`特記: ${rec.tempNote.slice(0,30)}${rec.tempNote.length>30?'…':''}`});
+  const editBtn=ds!==todayStr?`<div style="padding:10px 14px"><button class="btn" style="font-size:13px;padding:10px" onclick="editDay('${ds}')"><i class="ti ti-edit"></i> この日の記録を編集</button></div>`:'';
+  document.getElementById('day-detail-body').innerHTML=rows.map(r=>`<div class="rec-row"><div class="rec-icon ${r.cls}"><i class="ti ${r.icon}"></i></div><div class="rec-text">${r.text}</div></div>`).join('')+editBtn;
+}
+function editDay(ds){selectCalDay(ds);showTab('temp',document.querySelectorAll('.nb')[0]);}
+function calPrev(){if(calMonth===0){calMonth=11;calYear--;}else calMonth--;renderCal();}
+function calNext(){if(calMonth===11){calMonth=0;calYear++;}else calMonth++;renderCal();}
+
+renderCal();
+loadDateData(todayStr);
+loadFromCloud();
+</script>
+</body>
+</html>
