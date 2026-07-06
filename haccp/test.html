@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>テスト</title>
+<style>
+body{font-family:sans-serif;padding:20px;background:#f0f0f0}
+button{display:block;width:100%;padding:16px;margin:8px 0;font-size:16px;
+  background:#1d4ed8;color:#fff;border:none;border-radius:8px;cursor:pointer}
+#log{background:#fff;padding:12px;border-radius:8px;margin-top:12px;
+  min-height:100px;font-size:14px;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<h2>動作テスト</h2>
+<button onclick="test1()">① JSが動くかテスト</button>
+<button onclick="test2()">② タップイベントテスト</button>
+<button onclick="test3()">③ Supabase接続テスト</button>
+<button onclick="clearLog()">ログをクリア</button>
+<div id="log">ここにログが表示されます</div>
+<script>
+function log(msg){
+  document.getElementById('log').textContent += '\n' + new Date().toLocaleTimeString() + ' ' + msg;
+}
+function test1(){
+  log('✓ JSが動作しています');
+  log('userAgent: ' + navigator.userAgent.slice(0,50));
+  log('standalone: ' + (window.navigator.standalone ? 'YES(PWA)' : 'NO(ブラウザ)'));
+}
+function test2(){
+  log('✓ タップイベントが動作しています');
+}
+async function test3(){
+  log('Supabase接続テスト開始...');
+  const URL='https://jqexliindtoiwwjpkroz.supabase.co';
+  const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZXhsaWluZHRvaXd3anBrcm96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNDM0MjgsImV4cCI6MjA5NzgxOTQyOH0.8Croo0REQWfu0yYVsecd1ctKUs-8UrQCRPSOgYa_1c8';
+  try{
+    const r = await fetch(`${URL}/rest/v1/haccp_records?limit=1`,{
+      headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}
+    });
+    log('HTTP: ' + r.status);
+    if(r.ok){
+      const d = await r.json();
+      log('✓ Supabase接続OK: ' + JSON.stringify(d).slice(0,50));
+    } else {
+      const t = await r.text();
+      log('✗ エラー: ' + t.slice(0,100));
+    }
+  } catch(e){
+    log('✗ 接続失敗: ' + e.message);
+  }
+}
+function clearLog(){document.getElementById('log').textContent='';}
+log('ページ読み込み完了');
+</script>
+</body>
+</html>
