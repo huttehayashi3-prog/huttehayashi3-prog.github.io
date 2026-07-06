@@ -577,6 +577,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
   <button class="btn" onclick="saveAll()"><i class="ti ti-device-floppy"></i> 本日の全記録を保存</button>
   <button class="btn btn-o" style="margin-top:8px" onclick="loadFromCloud()"><i class="ti ti-cloud-download"></i> クラウドから取得</button>
   <div style="margin-top:12px;background:var(--bg2);border-radius:var(--radius-lg);padding:12px;display:flex;flex-direction:column;gap:8px">
+    <div style="font-size:12px;font-weight:600;color:var(--text2)"><i class="ti ti-file-import"></i> CSV一括取り込み</div>
+    <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg3,#f0f4ff);border-radius:var(--radius);cursor:pointer;border:1px dashed var(--border)">
+      <i class="ti ti-table-import" style="font-size:18px;color:var(--blue)"></i>
+      <span style="font-size:13px">ロット一覧CSVを取り込む</span>
+      <input type="file" accept=".csv" style="display:none" onchange="importLotCSV(event)">
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg3,#f0f4ff);border-radius:var(--radius);cursor:pointer;border:1px dashed var(--border)">
+      <i class="ti ti-truck-delivery" style="font-size:18px;color:var(--blue)"></i>
+      <span style="font-size:13px">出荷記録CSVを取り込む</span>
+      <input type="file" accept=".csv" style="display:none" onchange="importShipCSV(event)">
+    </label>
+    <div id="csv-result" style="display:none;font-size:12px;padding:8px;border-radius:var(--radius)"></div>
+  </div>
+  <div style="margin-top:8px;background:var(--bg2);border-radius:var(--radius-lg);padding:12px;display:flex;flex-direction:column;gap:8px">
     <div style="font-size:12px;font-weight:600;color:var(--text2)"><i class="ti ti-file-export"></i> CSV出力</div>
     <button class="btn btn-o" style="margin-top:0" onclick="exportLotCSV()"><i class="ti ti-table-export"></i> ロット一覧CSV</button>
     <button class="btn btn-o" style="margin-top:0" onclick="exportAllCSV()"><i class="ti ti-file-spreadsheet"></i> 全記録CSV</button>
@@ -1206,6 +1220,87 @@ function exportAllCSV(){
     +'\r\n\r\n■ 出荷記録\r\n'+toCSV(sH,sR).replace(BOM,'');
   dlCSV(content,`HH_全記録_${activeDate}.csv`);
 }
+
+// ── CSV一括取り込み ──────────────────────────────────
+function parseCSV(text){
+  if(text.charCodeAt(0)===0xFEFF)text=text.slice(1);
+  const lines=[];let buf='';
+  for(let i=0;i<text.length;i++){
+    if(text[i]==='\r'&&text[i+1]==='\n'){lines.push(buf);buf='';i++;}
+    else if(text[i]==='\n'||text[i]==='\r'){lines.push(buf);buf='';}
+    else{buf+=text[i];}
+  }
+  if(buf)lines.push(buf);
+  return lines.filter(l=>l.trim()).map(line=>{
+    const cols=[];let cur='';let inQ=false;
+    for(let i=0;i<line.length;i++){
+      if(line[i]==='"'){inQ=!inQ;}
+      else if(line[i]===','&&!inQ){cols.push(cur.trim());cur='';}
+      else{cur+=line[i];}
+    }
+    cols.push(cur.trim());return cols;
+  });
+}
+function showCSVResult(msg,ok=true){
+  const el=document.getElementById('csv-result');if(!el)return;
+  el.style.display='block';
+  el.style.background=ok?'var(--green-bg)':'var(--red-bg)';
+  el.style.color=ok?'var(--green-text)':'var(--red-text)';
+  el.textContent=msg;
+  setTimeout(()=>el.style.display='none',5000);
+}
+function importLotCSV(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const rows=parseCSV(e.target.result).slice(1).filter(r=>r[0]&&r[0].trim());
+      let added=0,skipped=0;
+      rows.forEach(r=>{
+        const mfgid=(r[0]||'').trim();const prod=(r[1]||'').trim();
+        const code=(r[2]||'').trim();const rawid=(r[3]||'').trim();
+        const qty=(r[4]||'').trim();const exp=(r[5]||'').trim();
+        const date=(r[6]||'').trim().replace(/-/g,'')||activeDate;
+        if(!mfgid||!prod){skipped++;return;}
+        if(lots.find(l=>l.mfgid===mfgid)){skipped++;return;}
+        const lot={mfgid,prod,code,rawid,qty,exp,date,factory:FACTORY};
+        lots.push(lot);
+        apiUpsert('haccp_lots',lot);
+        added++;
+      });
+      renderLots();updateCtLotSel();updateShipLotSel();
+      showCSVResult(`ロット取り込み完了: ${added}件追加 / ${skipped}件スキップ`);
+      addLog('ok',`CSVインポート: ロット${added}件`);
+      event.target.value='';
+    }catch(err){showCSVResult('取り込みエラー: '+err.message,false);}
+  };
+  reader.readAsText(file,'UTF-8');
+}
+function importShipCSV(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const rows=parseCSV(e.target.result).slice(1).filter(r=>r[0]&&r[0].trim());
+      let added=0,skipped=0;
+      rows.forEach(r=>{
+        const dest=(r[0]||'').trim();const lotId=(r[1]||'').trim();
+        const qty=parseInt(r[2]||'0');const date=(r[3]||'').trim()||ymdToInput(activeDate);
+        if(!dest||!lotId||!qty){skipped++;return;}
+        const rec={dest,lot_id:lotId,qty,date,recorded_at:new Date().toISOString()};
+        shipments.push(rec);
+        apiUpsert('haccp_shipments',{factory:FACTORY,...rec});
+        added++;
+      });
+      renderShipList();
+      showCSVResult(`出荷記録取り込み完了: ${added}件追加 / ${skipped}件スキップ`);
+      addLog('ok',`CSVインポート: 出荷${added}件`);
+      event.target.value='';
+    }catch(err){showCSVResult('取り込みエラー: '+err.message,false);}
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
 </script>
 </body>
 </html>
