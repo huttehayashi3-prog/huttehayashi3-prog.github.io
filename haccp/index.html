@@ -431,10 +431,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
         </select>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div><div class="lbl">加熱開始</div><input type="time" class="inp" id="ct-start"></div>
-        <div><div class="lbl">加熱終了</div><input type="time" class="inp" id="ct-end"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <div><div class="lbl">中心温度（℃）</div>
           <input type="number" class="inp" id="ct-temp" placeholder="75.0"
             inputmode="decimal" step="0.1" oninput="chkCT()">
@@ -611,6 +607,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
       <i class="ti ti-droplet" style="font-size:18px;color:var(--blue)"></i>
       <span style="font-size:13px">衛生管理CSVを取り込む</span>
       <input type="file" accept=".csv" style="display:none" onchange="importHygCSV(event)">
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg3,#f0f4ff);border-radius:var(--radius);cursor:pointer;border:1px dashed var(--border)">
+      <i class="ti ti-thermometer" style="font-size:18px;color:var(--red)"></i>
+      <span style="font-size:13px">中心温度記録CSVを取り込む</span>
+      <input type="file" accept=".csv" style="display:none" onchange="importCTCSV(event)">
     </label>
     <div id="csv-result" style="display:none;font-size:12px;padding:8px;border-radius:var(--radius)"></div>
   </div>
@@ -1149,8 +1150,8 @@ async function saveCT(){
   if(isNaN(temp)){toast('⚠ 中心温度を入力してください');return;}
   const ok=temp>=75;
   const rec={lot_id:lotId,date:activeDate,
-    start_time:document.getElementById('ct-start').value,
-    end_time:document.getElementById('ct-end').value,
+    start_time:'',
+    end_time:'',
     center_temp:temp,
     measure_point:document.getElementById('ct-point').value,
     staff:document.getElementById('ct-staff').value,
@@ -1447,6 +1448,39 @@ function importHygCSV(event){
       if(activeDate&&rows.length)loadDateData(activeDate);
       showCSVResult(`衛生管理取り込み完了: ${added}件`);
       addLog('ok',`CSVインポート: 衛生管理${added}件`);
+      event.target.value='';
+    }catch(err){showCSVResult('取り込みエラー: '+err.message,false);}
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+
+function importCTCSV(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const rows=parseCSV(e.target.result).slice(1).filter(r=>r[0]&&r[0].trim());
+      let added=0,skipped=0;
+      rows.forEach(r=>{
+        const date=parseDateToYMD(r[0]||'');
+        const lotId=(r[1]||'').trim();
+        const temp=parseFloat(r[2]||'');
+        const point=(r[3]||'中心部').trim();
+        const okStr=(r[4]||'').trim().toUpperCase();
+        const staff=(r[5]||'').trim();
+        if(!date||!lotId||isNaN(temp)){skipped++;return;}
+        const ok=okStr==='OK'||(okStr===''&&temp>=75);
+        const rec={lot_id:lotId,date,start_time:'',end_time:'',
+          center_temp:temp,measure_point:point,staff,note:'',ok,
+          recorded_at:new Date().toISOString()};
+        ctRecords.push(rec);
+        apiUpsert('haccp_center_temps',{factory:FACTORY,...rec,is_ok:ok});
+        added++;
+      });
+      renderCTList();
+      showCSVResult(`中心温度取り込み完了: ${added}件追加 / ${skipped}件スキップ`);
+      addLog('ok',`CSVインポート: 中心温度${added}件`);
       event.target.value='';
     }catch(err){showCSVResult('取り込みエラー: '+err.message,false);}
   };
