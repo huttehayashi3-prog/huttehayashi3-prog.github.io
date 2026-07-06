@@ -34,7 +34,7 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:var(--bg2);color:var(--text);min-height:100vh}
 .app{max-width:480px;margin:0 auto;padding-bottom:90px}
-.hdr{background:var(--bg);border-bottom:0.5px solid var(--border);padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
+.sticky-wrap{position:sticky;top:0;z-index:100;background:var(--bg)}.hdr{background:var(--bg);border-bottom:0.5px solid var(--border);padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between}
 .hdr-title{font-size:15px;font-weight:600;color:var(--text)}
 .hdr-date-row{display:flex;align-items:center;gap:6px;margin-top:2px}
 .date-sel{font-size:12px;border:0.5px solid var(--border2);border-radius:var(--radius);padding:3px 8px;background:var(--bg);color:var(--text)}
@@ -47,7 +47,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .past-banner.show{display:flex}
 .past-banner-text{font-size:12px;color:var(--amber-text);flex:1}
 .past-banner-btn{font-size:12px;color:var(--amber-text);background:none;border:none;cursor:pointer;font-weight:500;padding:0}
-.nav{display:flex;background:var(--bg);border-bottom:0.5px solid var(--border);position:relative;z-index:100}
+.nav{display:flex;background:var(--bg);border-bottom:0.5px solid var(--border)}
 .nb{flex:1;padding:10px 4px;font-size:11px;color:var(--text2);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;text-align:center;white-space:nowrap;line-height:1.4}
 .nb.on{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
 .sec{padding:10px}
@@ -130,7 +130,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 <body>
 <div class="app">
 
-<div class="hdr">
+<div class="sticky-wrap"><div class="hdr">
   <div>
     <div class="hdr-title"><i class="ti ti-building-factory2"></i> HutteHayashi HACCP</div>
     <div class="hdr-date-row">
