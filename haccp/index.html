@@ -1391,8 +1391,9 @@ function importTempCSV(event){
         const db=getDB();const rec=db[date]||{};
         rec.temps={t1:(r[1]||'').trim(),t2:(r[2]||'').trim(),t3:(r[3]||'').trim(),t4:(r[4]||'').trim()};
         rec.tempNote=(r[5]||'').trim();
+        rec.savedTemp=true;
         db[date]=rec;saveDB(db);
-        apiUpsert('haccp_records',{date,factory:FACTORY,...rec,updated_at:new Date().toISOString()});
+        apiUpsert('haccp_records',{date,factory:FACTORY,...rec,saved_temp:true,updated_at:new Date().toISOString()});
         added++;
       });
       if(activeDate&&rows.length)loadDateData(activeDate);
@@ -1417,7 +1418,7 @@ function importProcCSV(event){
         rec.process={p1:r[1]==='1',p2:r[2]==='1',p3:r[3]==='1',p4:r[4]==='1',p5:r[5]==='1',p6:r[6]==='1',p7:r[7]==='1',p8:r[8]==='1',p9:r[9]==='1'};
         rec.savedProc=true;
         db[date]=rec;saveDB(db);
-        apiUpsert('haccp_records',{date,factory:FACTORY,...rec,updated_at:new Date().toISOString()});
+        apiUpsert('haccp_records',{date,factory:FACTORY,...rec,saved_proc:true,updated_at:new Date().toISOString()});
         added++;
       });
       if(activeDate&&rows.length)loadDateData(activeDate);
@@ -1442,7 +1443,7 @@ function importHygCSV(event){
         rec.hygiene={h1:r[1]==='1',h2:r[2]==='1',h3:r[3]==='1',h4:r[4]==='1',h5:r[5]==='1',h6:r[6]==='1',h7:r[7]==='1'};
         rec.savedHyg=true;
         db[date]=rec;saveDB(db);
-        apiUpsert('haccp_records',{date,factory:FACTORY,...rec,updated_at:new Date().toISOString()});
+        apiUpsert('haccp_records',{date,factory:FACTORY,...rec,saved_hyg:true,updated_at:new Date().toISOString()});
         added++;
       });
       if(activeDate&&rows.length)loadDateData(activeDate);
