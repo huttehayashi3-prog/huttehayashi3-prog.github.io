@@ -580,7 +580,7 @@ function renderTemps(){
 
 function updateTemp(i,field,val){
   temps[i][field]=val
-  renderTemps()
+  if(field==="morning"||field==="evening"){renderTemps()}
 }
 
 function addTemp(){
