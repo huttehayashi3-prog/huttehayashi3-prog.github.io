@@ -211,27 +211,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
 <div id="tab-temp" class="tab on"><div class="sec">
   <div class="card">
     <div class="ch"><i class="ti ti-snowflake" style="color:var(--blue);font-size:18px"></i>
-      <span class="cht">冷蔵・冷凍庫温度</span>
-      <span class="chs">冷蔵&lt;5℃ / 冷凍&lt;-15℃ / 室温&lt;18℃</span>
+      <span class="cht">保管庫温度</span>
+      <span class="chs">基準：冷蔵&lt;5℃ / 冷凍&lt;-18℃</span>
     </div>
     <div class="t-row">
-      <div class="t-lbl">原料冷蔵庫<div class="t-sub">食肉・副材料</div></div>
+      <div class="t-lbl">原料保管庫<div class="t-sub">基準：5℃以下</div></div>
       <input type="number" class="t-inp" id="t1" placeholder="0.0" inputmode="decimal" step="0.1" oninput="chkTemp('t1','s1',5,'lt')">
       <span class="badge" id="s1">—</span>
     </div>
     <div class="t-row">
-      <div class="t-lbl">製品冷蔵庫<div class="t-sub">完成品保管</div></div>
-      <input type="number" class="t-inp" id="t2" placeholder="0.0" inputmode="decimal" step="0.1" oninput="chkTemp('t2','s2',5,'lt')">
+      <div class="t-lbl">冷凍庫<div class="t-sub">基準：-18℃以下</div></div>
+      <input type="number" class="t-inp" id="t2" placeholder="-18.0" inputmode="text" min="-50" oninput="chkTemp('t2','s2',-18,'lt')">
       <span class="badge" id="s2">—</span>
     </div>
     <div class="t-row">
-      <div class="t-lbl">冷凍庫<div class="t-sub">メンチカツ・冷凍品</div></div>
-      <input type="number" class="t-inp" id="t3" placeholder="-18.0" inputmode="text" min="-50" oninput="chkTemp('t3','s3',-15,'lt')">
+      <div class="t-lbl">半製品保管庫<div class="t-sub">基準：5℃以下</div></div>
+      <input type="number" class="t-inp" id="t3" placeholder="0.0" inputmode="decimal" step="0.1" oninput="chkTemp('t3','s3',5,'lt')">
       <span class="badge" id="s3">—</span>
     </div>
     <div class="t-row" style="border-bottom:none">
-      <div class="t-lbl">製造室室温<div class="t-sub">作業環境</div></div>
-      <input type="number" class="t-inp" id="t4" placeholder="0.0" inputmode="decimal" step="0.1" oninput="chkTemp('t4','s4',18,'lt')">
+      <div class="t-lbl">製品保管庫<div class="t-sub">基準：5℃以下</div></div>
+      <input type="number" class="t-inp" id="t4" placeholder="0.0" inputmode="decimal" step="0.1" oninput="chkTemp('t4','s4',5,'lt')">
       <span class="badge" id="s4">—</span>
     </div>
   </div>
@@ -576,6 +576,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
   </div>
   <button class="btn" onclick="saveAll()"><i class="ti ti-device-floppy"></i> 本日の全記録を保存</button>
   <button class="btn btn-o" style="margin-top:8px" onclick="loadFromCloud()"><i class="ti ti-cloud-download"></i> クラウドから取得</button>
+
+    <button class="btn btn-o" style="margin-top:0" onclick="exportLotCSV()"><i class="ti ti-table-export"></i> ロット一覧CSV</button>
+    <button class="btn btn-o" style="margin-top:0" onclick="exportAllCSV()"><i class="ti ti-file-spreadsheet"></i> 全記録CSV</button>
+  </div>
   <div style="margin-top:12px;background:var(--bg2);border-radius:var(--radius-lg);padding:12px;display:flex;flex-direction:column;gap:8px">
     <div style="font-size:12px;font-weight:600;color:var(--text2)"><i class="ti ti-file-import"></i> CSV一括取り込み</div>
     <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg3,#f0f4ff);border-radius:var(--radius);cursor:pointer;border:1px dashed var(--border)">
@@ -588,13 +592,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
       <span style="font-size:13px">出荷記録CSVを取り込む</span>
       <input type="file" accept=".csv" style="display:none" onchange="importShipCSV(event)">
     </label>
+    <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg3,#f0f4ff);border-radius:var(--radius);cursor:pointer;border:1px dashed var(--border)">
+      <i class="ti ti-thermometer" style="font-size:18px;color:var(--blue)"></i>
+      <span style="font-size:13px">温度記録CSVを取り込む</span>
+      <input type="file" accept=".csv" style="display:none" onchange="importTempCSV(event)">
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg3,#f0f4ff);border-radius:var(--radius);cursor:pointer;border:1px dashed var(--border)">
+      <i class="ti ti-list-check" style="font-size:18px;color:var(--blue)"></i>
+      <span style="font-size:13px">工程点検CSVを取り込む</span>
+      <input type="file" accept=".csv" style="display:none" onchange="importProcCSV(event)">
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg3,#f0f4ff);border-radius:var(--radius);cursor:pointer;border:1px dashed var(--border)">
+      <i class="ti ti-droplet" style="font-size:18px;color:var(--blue)"></i>
+      <span style="font-size:13px">衛生管理CSVを取り込む</span>
+      <input type="file" accept=".csv" style="display:none" onchange="importHygCSV(event)">
+    </label>
     <div id="csv-result" style="display:none;font-size:12px;padding:8px;border-radius:var(--radius)"></div>
   </div>
   <div style="margin-top:8px;background:var(--bg2);border-radius:var(--radius-lg);padding:12px;display:flex;flex-direction:column;gap:8px">
     <div style="font-size:12px;font-weight:600;color:var(--text2)"><i class="ti ti-file-export"></i> CSV出力</div>
-    <button class="btn btn-o" style="margin-top:0" onclick="exportLotCSV()"><i class="ti ti-table-export"></i> ロット一覧CSV</button>
-    <button class="btn btn-o" style="margin-top:0" onclick="exportAllCSV()"><i class="ti ti-file-spreadsheet"></i> 全記録CSV</button>
-  </div>
 </div></div>
 
 </div><!-- /scroll-area -->
@@ -666,6 +682,22 @@ const SUPABASE_URL='https://jqexliindtoiwwjpkroz.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZXhsaWluZHRvaXd3anBrcm96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNDM0MjgsImV4cCI6MjA5NzgxOTQyOH0.8Croo0REQWfu0yYVsecd1ctKUs-8UrQCRPSOgYa_1c8';
 const FACTORY='HutteHayashi';
 const HEADERS={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'resolution=merge-duplicates,return=minimal'};
+
+
+function parseDateToYMD(s){
+  // 2026/7/3 や 2026-07-03 や 20260703 → YYYYMMDD
+  s=(s||'').trim();
+  if(s.length===8&&/^[0-9]+$/.test(s))return s; // 既にYYYYMMDD
+  const m=s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if(m)return m[1]+String(m[2]).padStart(2,'0')+String(m[3]).padStart(2,'0');
+  return s.replace(/[\/\-]/g,''); // フォールバック
+}
+function parseDateToInput(s){
+  // 2026/7/3 や 20260703 → 2026-07-03（input[type=date]用）
+  const ymd=parseDateToYMD(s);
+  if(ymd.length===8)return `${ymd.slice(0,4)}-${ymd.slice(4,6)}-${ymd.slice(6,8)}`;
+  return s;
+}
 
 // ── 日付ユーティリティ ──
 function todayYMD(){
@@ -739,7 +771,7 @@ function getDB(){try{return JSON.parse(localStorage.getItem('hh_haccp')||'{}')}c
 function saveDB(db){try{localStorage.setItem('hh_haccp',JSON.stringify(db))}catch(e){}}
 function loadDateData(ds){
   const db=getDB();const rec=db[ds]||{};
-  const thrs=[5,5,-15,18];const dirs=['lt','lt','lt','lt'];
+  const thrs=[5,-18,5,5];const dirs=['lt','lt','lt','lt'];
   ['t1','t2','t3','t4'].forEach((id,i)=>{
     const el=document.getElementById(id);
     if(el)el.value=rec.temps?rec.temps[id]||'':'';
@@ -1204,7 +1236,7 @@ function exportLotCSV(){
 function exportAllCSV(){
   const db=getDB();
   const dates=Object.keys(db).sort();
-  const tH=['日付','原料冷蔵(℃)','製品冷蔵(℃)','冷凍庫(℃)','製造室(℃)','特記事項'];
+  const tH=['日付','原料保管庫(℃)','冷凍庫(℃)','半製品保管庫(℃)','製品保管庫(℃)','特記事項'];
   const tR=dates.map(ds=>{const r=db[ds]||{};const t=r.temps||{};return[fmtDisp(ds),t.t1||'',t.t2||'',t.t3||'',t.t4||'',r.tempNote||''];});
   const ctH=['日付','ロット番号','開始','終了','中心温度(℃)','測定箇所','判定','担当者'];
   const ctR=ctRecords.map(r=>[fmtDisp(r.date),r.lot_id,r.start_time||'',r.end_time||'',r.center_temp,r.measure_point,r.ok?'OK':'NG',r.staff||'']);
@@ -1259,8 +1291,8 @@ function importLotCSV(event){
       rows.forEach(r=>{
         const mfgid=(r[0]||'').trim();const prod=(r[1]||'').trim();
         const code=(r[2]||'').trim();const rawid=(r[3]||'').trim();
-        const qty=(r[4]||'').trim();const exp=(r[5]||'').trim();
-        const date=(r[6]||'').trim().replace(/-/g,'')||activeDate;
+        const qty=(r[4]||'').trim();const exp=parseDateToInput(r[5])||'';
+        const date=parseDateToYMD(r[6])||activeDate;
         if(!mfgid||!prod){skipped++;return;}
         if(lots.find(l=>l.mfgid===mfgid)){skipped++;return;}
         const lot={mfgid,prod,code,rawid,qty,exp,date,factory:FACTORY};
@@ -1285,7 +1317,7 @@ function importShipCSV(event){
       let added=0,skipped=0;
       rows.forEach(r=>{
         const dest=(r[0]||'').trim();const lotId=(r[1]||'').trim();
-        const qty=parseInt(r[2]||'0');const date=(r[3]||'').trim()||ymdToInput(activeDate);
+        const qty=parseInt(r[2]||'0');const date=parseDateToInput(r[3])||ymdToInput(activeDate);
         if(!dest||!lotId||!qty){skipped++;return;}
         const rec={dest,lot_id:lotId,qty,date,recorded_at:new Date().toISOString()};
         shipments.push(rec);
@@ -1295,6 +1327,83 @@ function importShipCSV(event){
       renderShipList();
       showCSVResult(`出荷記録取り込み完了: ${added}件追加 / ${skipped}件スキップ`);
       addLog('ok',`CSVインポート: 出荷${added}件`);
+      event.target.value='';
+    }catch(err){showCSVResult('取り込みエラー: '+err.message,false);}
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+
+function importTempCSV(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const rows=parseCSV(e.target.result).slice(1).filter(r=>r[0]&&r[0].trim());
+      let added=0;
+      rows.forEach(r=>{
+        const date=parseDateToYMD(r[0]||'');
+        if(!date||date.length!==8)return;
+        const db=getDB();const rec=db[date]||{};
+        rec.temps={t1:(r[1]||'').trim(),t2:(r[2]||'').trim(),t3:(r[3]||'').trim(),t4:(r[4]||'').trim()};
+        rec.tempNote=(r[5]||'').trim();
+        db[date]=rec;saveDB(db);
+        apiUpsert('haccp_records',{date,factory:FACTORY,...rec,updated_at:new Date().toISOString()});
+        added++;
+      });
+      if(activeDate&&rows.length)loadDateData(activeDate);
+      showCSVResult(`温度記録取り込み完了: ${added}件`);
+      addLog('ok',`CSVインポート: 温度記録${added}件`);
+      event.target.value='';
+    }catch(err){showCSVResult('取り込みエラー: '+err.message,false);}
+  };
+  reader.readAsText(file,'UTF-8');
+}
+function importProcCSV(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const rows=parseCSV(e.target.result).slice(1).filter(r=>r[0]&&r[0].trim());
+      let added=0;
+      rows.forEach(r=>{
+        const date=parseDateToYMD(r[0]||'');
+        if(!date||date.length!==8)return;
+        const db=getDB();const rec=db[date]||{};
+        rec.process={p1:r[1]==='1',p2:r[2]==='1',p3:r[3]==='1',p4:r[4]==='1',p5:r[5]==='1',p6:r[6]==='1',p7:r[7]==='1',p8:r[8]==='1',p9:r[9]==='1'};
+        rec.savedProc=true;
+        db[date]=rec;saveDB(db);
+        apiUpsert('haccp_records',{date,factory:FACTORY,...rec,updated_at:new Date().toISOString()});
+        added++;
+      });
+      if(activeDate&&rows.length)loadDateData(activeDate);
+      showCSVResult(`工程点検取り込み完了: ${added}件`);
+      addLog('ok',`CSVインポート: 工程点検${added}件`);
+      event.target.value='';
+    }catch(err){showCSVResult('取り込みエラー: '+err.message,false);}
+  };
+  reader.readAsText(file,'UTF-8');
+}
+function importHygCSV(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const rows=parseCSV(e.target.result).slice(1).filter(r=>r[0]&&r[0].trim());
+      let added=0;
+      rows.forEach(r=>{
+        const date=parseDateToYMD(r[0]||'');
+        if(!date||date.length!==8)return;
+        const db=getDB();const rec=db[date]||{};
+        rec.hygiene={h1:r[1]==='1',h2:r[2]==='1',h3:r[3]==='1',h4:r[4]==='1',h5:r[5]==='1',h6:r[6]==='1',h7:r[7]==='1'};
+        rec.savedHyg=true;
+        db[date]=rec;saveDB(db);
+        apiUpsert('haccp_records',{date,factory:FACTORY,...rec,updated_at:new Date().toISOString()});
+        added++;
+      });
+      if(activeDate&&rows.length)loadDateData(activeDate);
+      showCSVResult(`衛生管理取り込み完了: ${added}件`);
+      addLog('ok',`CSVインポート: 衛生管理${added}件`);
       event.target.value='';
     }catch(err){showCSVResult('取り込みエラー: '+err.message,false);}
   };
