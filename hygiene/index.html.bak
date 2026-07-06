@@ -569,10 +569,10 @@ function renderTemps(){
     const lim=parseFloat(t.limit)
     const ok=vals.length===0?null:Math.max(...vals)<=lim
     return `<tr>
-      <td><span </td>
-      <td><input class="temp-input" type="text" inputmode="text" value="${t.limit}" onblur="updateTemp(${i},'limit',this.value)" style="width:65px"></td>
-      <td><input class="temp-input" type="text" inputmode="text" value="${t.morning}" onblur="updateTemp(${i},'morning',this.value)" placeholder="—"></td>
-      <td><input class="temp-input" type="text" inputmode="text" value="${t.evening}" onblur="updateTemp(${i},'evening',this.value)" placeholder="—"></td>
+      <td><span oncontextmenu="deleteTemp(${i});return false" style="cursor:pointer;font-size:13px">${t.loc}</span></td>
+      <td><input class="temp-input" type="text" inputmode="text" value="${t.limit}" oninput="updateTemp(${i},'limit',this.value)" style="width:65px"></td>
+      <td><input class="temp-input" type="text" inputmode="text" value="${t.morning}" oninput="updateTemp(${i},'morning',this.value)" placeholder="—"></td>
+      <td><input class="temp-input" type="text" inputmode="text" value="${t.evening}" oninput="updateTemp(${i},'evening',this.value)" placeholder="—"></td>
       <td>${ok===null?'<span style="color:#999;font-size:11px">—</span>':ok?'<span class="ok-badge">適正</span>':'<span class="ng-badge">要対応</span>'}</td>
     </tr>`
   }).join('')
