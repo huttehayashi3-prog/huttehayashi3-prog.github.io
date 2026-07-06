@@ -47,7 +47,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .past-banner.show{display:flex}
 .past-banner-text{font-size:12px;color:var(--amber-text);flex:1}
 .past-banner-btn{font-size:12px;color:var(--amber-text);background:none;border:none;cursor:pointer;font-weight:500;padding:0}
-.nav{display:flex;background:var(--bg);border-bottom:0.5px solid var(--border)}
+.nav{display:flex;background:var(--bg);border-bottom:0.5px solid var(--border);position:relative;z-index:100}
 .nb{flex:1;padding:10px 4px;font-size:11px;color:var(--text2);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;text-align:center;white-space:nowrap;line-height:1.4}
 .nb.on{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
 .sec{padding:10px}
@@ -482,7 +482,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
     </div>
 
     <!-- ロット編集モーダル -->
-    <div id="lot-edit-wrap" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;overflow-y:auto;padding:20px 0">
+    <div id="lot-edit-wrap" style="display:none;pointer-events:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;overflow-y:auto;padding:20px 0">
       <div style="background:var(--surface-2,#fff);border-radius:16px;margin:0 12px;padding:0 0 24px">
         <div style="display:flex;align-items:center;padding:16px 16px 12px;border-bottom:0.5px solid var(--border)">
           <span style="font-size:15px;font-weight:500;color:var(--text);flex:1">ロット情報を修正</span>
@@ -1692,12 +1692,16 @@ function editLot(idx) {
   document.getElementById('edit-lot-rawid').value = l.rawid || '';
   document.getElementById('edit-lot-qty').value   = l.qty   || '';
   document.getElementById('edit-lot-exp').value   = l.exp   || '';
-  document.getElementById('lot-edit-wrap').style.display = 'block';
+  const wrap = document.getElementById('lot-edit-wrap');
+  wrap.style.display = 'block';
+  wrap.style.pointerEvents = 'auto';
   document.body.style.overflow = 'hidden';
 }
 
 function closeLotEdit() {
-  document.getElementById('lot-edit-wrap').style.display = 'none';
+  const el = document.getElementById('lot-edit-wrap');
+  el.style.display = 'none';
+  el.style.pointerEvents = 'none';
   document.body.style.overflow = '';
 }
 
