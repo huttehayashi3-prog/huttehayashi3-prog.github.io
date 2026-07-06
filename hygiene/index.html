@@ -340,7 +340,7 @@ let currentUser = null
 let stores = []
 let currentStore = null
 let checks = []
-let temps = [{loc:'冷蔵庫①',morning:'',evening:'',limit:10},{loc:'冷凍庫①',morning:'',evening:'',limit:-15},{loc:'食材保管庫',morning:'',evening:'',limit:15}]
+let temps = []
 let rules = []
 let menus = []
 let staff = []
@@ -424,8 +424,29 @@ async function selectStore(id){
 }
 
 async function loadPageData(){
-  await Promise.all([loadRules(),loadMenus(),loadStaff(),loadRecentRecords()])
+  await Promise.all([loadRules(),loadMenus(),loadStaff(),loadRecentRecords(),loadTempEquipment()])
   loadRecord(selectedDate)
+}
+
+async function loadTempEquipment(){
+  if(!currentStore)return
+  const {data}=await sb.from('temp_equipment').select('*').eq('store_id',currentStore.id).order('sort_order')
+  if(data&&data.length>0){
+    temps=data.map(t=>({id:t.id,loc:t.loc,morning:'',evening:'',limit:t.limit_temp}))
+  }else{
+    temps=[]
+  }
+  renderTemps()
+}
+
+async function saveTempEquipment(){
+  if(!currentStore)return
+  await sb.from('temp_equipment').delete().eq('store_id',currentStore.id)
+  if(temps.length>0){
+    await sb.from('temp_equipment').insert(
+      temps.map((t,i)=>({store_id:currentStore.id,loc:t.loc,limit_temp:parseFloat(t.limit)||10,sort_order:i}))
+    )
+  }
 }
 
 async function addStore(){
@@ -512,8 +533,14 @@ async function loadRecord(d){
   if(data){
     document.getElementById('dailyNote').value=data.note||''
     if(data.staff_name)document.getElementById('dailyStaff').value=data.staff_name
-    if(data.temps?.length>0)temps=data.temps
-    else temps=[{loc:'冷蔵庫①',morning:'',evening:'',limit:10},{loc:'冷凍庫①',morning:'',evening:'',limit:-15},{loc:'食材保管庫',morning:'',evening:'',limit:15}]
+    if(data.temps?.length>0){
+      temps=temps.map(t=>{
+        const sv=data.temps.find(s=>s.loc===t.loc)
+        return sv?{...t,morning:sv.morning||'',evening:sv.evening||''}:{...t,morning:'',evening:''}
+      })
+    }else{
+      temps=temps.map(t=>({...t,morning:'',evening:''}))
+    }
     if(data.checks?.length>0){
       checks=checks.map(c=>{
         const sv=data.checks.find(s=>s.rule_id===c.rule_id)
@@ -522,7 +549,7 @@ async function loadRecord(d){
     }
   }else{
     document.getElementById('dailyNote').value=''
-    temps=[{loc:'冷蔵庫①',morning:'',evening:'',limit:10},{loc:'冷凍庫①',morning:'',evening:'',limit:-15},{loc:'食材保管庫',morning:'',evening:'',limit:15}]
+    temps=temps.map(t=>({...t,morning:'',evening:''}))
     checks=checks.map(c=>({...c,checked:false}))
   }
   renderChecks()
@@ -580,7 +607,8 @@ function renderTemps(){
 
 function updateTemp(i,field,val){
   temps[i][field]=val
-  if(field==="morning"||field==="evening"){renderTemps()}
+  if(field==='morning'||field==='evening'){renderTemps()}
+  else{saveTempEquipment()}
 }
 
 function addTemp(){
@@ -592,12 +620,14 @@ function addTemp(){
   document.getElementById('newTempLimit').value='10'
   closeModal('addTempModal')
   renderTemps()
+  saveTempEquipment()
 }
 
 function deleteTemp(i){
   if(!confirm('「'+temps[i].loc+'」を削除しますか？'))return
   temps.splice(i,1)
   renderTemps()
+  saveTempEquipment()
 }
 
 async function saveDaily(){
