@@ -605,7 +605,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
       <div id="diag-result" style="font-size:12px;display:none;padding:8px;border-radius:var(--radius);word-break:break-all;"></div>
     </div>
     <div style="margin-top:12px;background:var(--bg2);border-radius:var(--radius-lg);padding:12px;display:flex;flex-direction:column;gap:8px">
-      <div style="font-size:12px;font-weight:600;color:var(--text2);padding-bottom:4px;border-bottom:0.5px solid var(--border)"><i class="ti ti-file-export"></i> CSV出力</div>
+      <div style="font-size:12px;font-weight:600;color:var(--text2);padding-bottom:4px;border-bottom:0.5px solid var(--border)"><i class="ti ti-file-import"></i> CSV一括取り込み</div>
+      <div style="font-size:11px;color:var(--text2)">Excelで作成したCSVファイルを選択してください</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg3,#F0F4FF);border-radius:var(--radius);cursor:pointer;border:1px dashed var(--border)">
+          <i class="ti ti-table-import" style="font-size:18px;color:var(--blue)"></i>
+          <span style="font-size:13px;color:var(--text)">ロット一覧CSV を取り込む</span>
+          <input type="file" accept=".csv" id="csv-lot-file" style="display:none" onchange="importLotCSV(event)">
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg3,#F0F4FF);border-radius:var(--radius);cursor:pointer;border:1px dashed var(--border)">
+          <i class="ti ti-truck-delivery" style="font-size:18px;color:var(--blue)"></i>
+          <span style="font-size:13px;color:var(--text)">出荷記録CSV を取り込む</span>
+          <input type="file" accept=".csv" id="csv-ship-file" style="display:none" onchange="importShipCSV(event)">
+        </label>
+      </div>
+      <div id="csv-import-result" style="display:none;font-size:12px;padding:8px;border-radius:var(--radius)"></div>
+      <div style="font-size:12px;font-weight:600;color:var(--text2);padding-bottom:4px;border-bottom:0.5px solid var(--border);margin-top:4px"><i class="ti ti-file-export"></i> CSV出力</div>
       <button class="btn btn-o" style="margin-top:0" onclick="exportLotCSV()">
         <i class="ti ti-table-export"></i> ロット一覧をCSV出力
       </button>
@@ -1704,6 +1719,108 @@ function saveLotEdit() {
   addLog('ok', `ロット修正: ${lots[idx].mfgid} (${prod})`);
   toast(`ロット修正: ${lots[idx].mfgid}`);
   closeLotEdit();
+}
+
+
+// ── CSV一括取り込み ────────────────────────────────────
+function parseCSV(text) {
+  // BOM除去
+  text = text.replace(/^﻿/, '');
+  const lines = text.split(/
+?
+/).filter(l => l.trim());
+  return lines.map(line => {
+    // ダブルクォート対応
+    const cols = [];
+    let cur = ''; let inQ = false;
+    for(let i=0; i<line.length; i++){
+      if(line[i]==='"'){ inQ=!inQ; }
+      else if(line[i]===',' && !inQ){ cols.push(cur.trim()); cur=''; }
+      else { cur+=line[i]; }
+    }
+    cols.push(cur.trim());
+    return cols;
+  });
+}
+
+function showImportResult(msg, ok=true) {
+  const el = document.getElementById('csv-import-result');
+  el.style.display = 'block';
+  el.style.background = ok ? 'var(--green-bg)' : 'var(--red-bg)';
+  el.style.color = ok ? 'var(--green-text)' : 'var(--red-text)';
+  el.textContent = msg;
+  setTimeout(() => el.style.display='none', 5000);
+}
+
+function importLotCSV(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const rows = parseCSV(e.target.result);
+      // ヘッダー行をスキップ（1行目がヘッダー）
+      const dataRows = rows.slice(1).filter(r => r[0] && r[0].trim());
+      let added = 0; let skipped = 0;
+      dataRows.forEach(r => {
+        const mfgid = (r[0]||'').trim();
+        const prod  = (r[1]||'').trim();
+        const code  = (r[2]||'').trim();
+        const rawid = (r[3]||'').trim();
+        const qty   = (r[4]||'').trim();
+        const exp   = (r[5]||'').trim();
+        const date  = (r[6]||'').trim() || activeDate;
+        if(!mfgid || !prod) { skipped++; return; }
+        // 既存チェック
+        if(lots.find(l => l.mfgid === mfgid)) { skipped++; return; }
+        const lot = { mfgid, prod, code, rawid, qty, exp,
+                      date: date.replace(/-/g,''), indate: date };
+        lots.push(lot);
+        apiUpsert('haccp_lots', { ...lot, factory: FACTORY });
+        added++;
+      });
+      renderLots(); updateCtLotSel(); updateShipLotSel(); updateMfgId();
+      showImportResult(`ロット取り込み完了: ${added}件追加 / ${skipped}件スキップ`);
+      addLog('ok', `CSVインポート: ロット${added}件追加`);
+      event.target.value = '';
+    } catch(err) {
+      showImportResult('取り込みエラー: ' + err.message, false);
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function importShipCSV(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const rows = parseCSV(e.target.result);
+      const dataRows = rows.slice(1).filter(r => r[0] && r[0].trim());
+      let added = 0; let skipped = 0;
+      dataRows.forEach(r => {
+        const dest  = (r[0]||'').trim();
+        const lotId = (r[1]||'').trim();
+        const qty   = parseInt(r[2]||'0');
+        const date  = (r[3]||'').trim() || activeDate;
+        const note  = (r[4]||'').trim();
+        if(!dest || !lotId || !qty) { skipped++; return; }
+        const rec = { dest, lot_id: lotId, qty, date, note,
+                      recorded_at: new Date().toISOString() };
+        shipments.push(rec);
+        apiUpsert('haccp_shipments', { factory: FACTORY, ...rec });
+        added++;
+      });
+      renderShipList(); updateShipLotSel();
+      showImportResult(`出荷記録取り込み完了: ${added}件追加 / ${skipped}件スキップ`);
+      addLog('ok', `CSVインポート: 出荷${added}件追加`);
+      event.target.value = '';
+    } catch(err) {
+      showImportResult('取り込みエラー: ' + err.message, false);
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
 }
 
 </script>
