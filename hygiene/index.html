@@ -569,7 +569,7 @@ function renderTemps(){
     const lim=parseFloat(t.limit)
     const ok=vals.length===0?null:Math.max(...vals)<=lim
     return `<tr>
-      <td><span </td>
+      <td><input class="temp-input" type="text" value="${t.loc}" onblur="updateTemp(${i},'loc',this.value)" style="width:80px;font-size:12px"><button onclick="deleteTemp(${i})" style="background:none;border:none;color:#E24B4A;font-size:16px;cursor:pointer;padding:0 4px">×</button></td>
       <td><input class="temp-input" type="text" inputmode="text" value="${t.limit}" onblur="updateTemp(${i},'limit',this.value)" style="width:65px"></td>
       <td><input class="temp-input" type="text" inputmode="text" value="${t.morning}" onblur="updateTemp(${i},'morning',this.value)" placeholder="—"></td>
       <td><input class="temp-input" type="text" inputmode="text" value="${t.evening}" onblur="updateTemp(${i},'evening',this.value)" placeholder="—"></td>
