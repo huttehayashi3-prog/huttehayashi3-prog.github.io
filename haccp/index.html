@@ -577,10 +577,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
   <button class="btn" onclick="saveAll()"><i class="ti ti-device-floppy"></i> 本日の全記録を保存</button>
   <button class="btn btn-o" style="margin-top:8px" onclick="loadFromCloud()"><i class="ti ti-cloud-download"></i> クラウドから取得</button>
 
+  <!-- CSV出力 -->
+  <div style="margin-top:12px;background:var(--bg2);border-radius:var(--radius-lg);padding:12px;display:flex;flex-direction:column;gap:8px">
+    <div style="font-size:12px;font-weight:600;color:var(--text2)"><i class="ti ti-file-export"></i> CSV出力</div>
     <button class="btn btn-o" style="margin-top:0" onclick="exportLotCSV()"><i class="ti ti-table-export"></i> ロット一覧CSV</button>
     <button class="btn btn-o" style="margin-top:0" onclick="exportAllCSV()"><i class="ti ti-file-spreadsheet"></i> 全記録CSV</button>
   </div>
-  <div style="margin-top:12px;background:var(--bg2);border-radius:var(--radius-lg);padding:12px;display:flex;flex-direction:column;gap:8px">
+
+  <!-- CSV一括取り込み -->
+  <div style="margin-top:8px;background:var(--bg2);border-radius:var(--radius-lg);padding:12px;display:flex;flex-direction:column;gap:8px">
     <div style="font-size:12px;font-weight:600;color:var(--text2)"><i class="ti ti-file-import"></i> CSV一括取り込み</div>
     <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg3,#f0f4ff);border-radius:var(--radius);cursor:pointer;border:1px dashed var(--border)">
       <i class="ti ti-table-import" style="font-size:18px;color:var(--blue)"></i>
@@ -609,11 +614,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
     </label>
     <div id="csv-result" style="display:none;font-size:12px;padding:8px;border-radius:var(--radius)"></div>
   </div>
-  <div style="margin-top:8px;background:var(--bg2);border-radius:var(--radius-lg);padding:12px;display:flex;flex-direction:column;gap:8px">
-    <div style="font-size:12px;font-weight:600;color:var(--text2)"><i class="ti ti-file-export"></i> CSV出力</div>
-</div></div>
 
-</div><!-- /scroll-area -->
+</div></div></div><!-- /scroll-area -->
 
 <!-- ロット編集モーダル -->
 <div class="modal-wrap" id="lot-edit-wrap">
@@ -1300,9 +1302,13 @@ function importLotCSV(event){
         apiUpsert('haccp_lots',lot);
         added++;
       });
-      renderLots();updateCtLotSel();updateShipLotSel();
+      renderLots();updateCtLotSel();updateShipLotSel();updateMfgId();
       showCSVResult(`ロット取り込み完了: ${added}件追加 / ${skipped}件スキップ`);
       addLog('ok',`CSVインポート: ロット${added}件`);
+      toast(`ロット${added}件取り込み完了 → 追跡タブで確認`);
+      // 追跡タブへ移動
+      const traceBtn=document.querySelector('.nb:nth-child(4)');
+      if(traceBtn)showTab('trace',traceBtn);
       event.target.value='';
     }catch(err){showCSVResult('取り込みエラー: '+err.message,false);}
   };
