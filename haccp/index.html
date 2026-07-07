@@ -1166,7 +1166,7 @@ async function saveCT(){
     staff:document.getElementById('ct-staff').value,
     ok,recorded_at:new Date().toISOString()};
   ctRecords.push(rec);renderCTList();
-  apiUpsert('haccp_center_temps',{factory:FACTORY,...rec,is_ok:ok});
+  apiUpsert('haccp_center_temps',{factory:FACTORY,lot_id:lotId,date:activeDate,start_time:'',end_time:'',center_temp:temp,measure_point:document.getElementById('ct-point').value,staff:document.getElementById('ct-staff').value,is_ok:ok,recorded_at:rec.recorded_at});
   addLog(ok?'ok':'ng',`中心温度: ${lotId} ${temp}℃ ${ok?'OK':'NG'}`);
   toast(ok?`中心温度 ${temp}℃ OK`:`⚠ 中心温度 ${temp}℃ NG`);
   document.getElementById('ct-temp').value='';
@@ -1485,7 +1485,7 @@ function importCTCSV(event){
           center_temp:temp,measure_point:point,staff,note:'',ok,
           recorded_at:new Date().toISOString()};
         ctRecords.push(rec);
-        apiUpsert('haccp_center_temps',{factory:FACTORY,...rec,is_ok:ok});
+        apiUpsert('haccp_center_temps',{factory:FACTORY,lot_id:lotId,date:activeDate,start_time:'',end_time:'',center_temp:temp,measure_point:document.getElementById('ct-point').value,staff:document.getElementById('ct-staff').value,is_ok:ok,recorded_at:rec.recorded_at});
         added++;
       });
       renderCTList();
