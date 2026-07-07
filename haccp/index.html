@@ -918,7 +918,14 @@ async function loadFromCloud(){
     if(r2.ok){
       const rows=await r2.json();
       ctRecords.length=0;
-      rows.forEach(r=>ctRecords.push({lot_id:r.lot_id,date:r.date,start_time:r.start_time,end_time:r.end_time,center_temp:r.center_temp,measure_point:r.measure_point,staff:r.staff,note:r.note,ok:r.is_ok}));
+      rows.forEach(r=>ctRecords.push({
+        lot_id:r.lot_id,date:r.date,
+        start_time:r.start_time||'',end_time:r.end_time||'',
+        center_temp:r.center_temp,
+        measure_point:r.measure_point||'中心部',
+        staff:r.staff||'',note:r.note||'',
+        ok:r.is_ok  // is_ok→okに変換
+      }));
       renderCTList();
     }
     // ── haccp_shipments（出荷記録）を取得 ──
