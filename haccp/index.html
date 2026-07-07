@@ -828,7 +828,10 @@ async function apiUpsert(table,body){
     setSyncStatus('syncing');
     // POSTでupsert（重複時はmerge）
     const headers={...HEADERS,'Prefer':'resolution=merge-duplicates,return=minimal'};
-    const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}`,{method:'POST',headers,body:JSON.stringify(body)});
+    // on_conflict でupsert対象カラムを指定
+    const conflict = table==='haccp_records'?'?on_conflict=date,factory':
+                     table==='haccp_lots'?'?on_conflict=mfgid':'';
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}${conflict}`,{method:'POST',headers,body:JSON.stringify(body)});
     if(!r.ok){const t=await r.text();console.error(table,r.status,t);setSyncStatus('err');return false;}
     setSyncStatus('ok');return true;
   }catch(e){console.error(e);setSyncStatus('err');return false;}
